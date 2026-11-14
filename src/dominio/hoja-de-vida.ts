@@ -17,6 +17,7 @@ import { ETIQUETAS_MANTENIMIENTO, ETIQUETAS_TIPO } from "@/lib/etiquetas";
 import { fechaIsoLocal, formatearFecha } from "@/lib/fechas";
 import { formatearPesos } from "@/lib/moneda";
 import { esTipoPc } from "@/lib/validacion/activos";
+import { MOTIVO_CARGA_INICIAL } from "./comunes";
 
 type TipoActivo = (typeof TIPOS_ACTIVO)[number];
 export type Configuracion = typeof configuracion.$inferSelect;
@@ -342,11 +343,15 @@ function lineasDeHistorial(historial: MovimientoHistorial[]): string[] {
 
   const eventos: Evento[] = historial.flatMap((m) => {
     const equipo = `${m.codigo} (${tipoEnMayusculas(m.tipo)})`;
-    const recibe: Evento = { fecha: m.fechaDesde, accion: "RECIBE", equipo, motivo: m.motivo };
+    // La carga inicial del Excel no es un cambio de equipo; su entrega posterior sí
+    const recibe: Evento[] =
+      m.motivo === MOTIVO_CARGA_INICIAL
+        ? []
+        : [{ fecha: m.fechaDesde, accion: "RECIBE", equipo, motivo: m.motivo }];
     const entrega: Evento[] = m.fechaHasta
       ? [{ fecha: m.fechaHasta, accion: "ENTREGA", equipo, motivo: null }]
       : [];
-    return [recibe, ...entrega];
+    return [...recibe, ...entrega];
   });
 
   // En un mismo día, primero lo que se entrega y luego lo que se recibe

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Activo } from "@/db/schema";
+import { MOTIVO_CARGA_INICIAL } from "./comunes";
 import {
   construirHojaDeVida,
   type ActivoDeHoja,
@@ -264,6 +265,22 @@ describe("construirHojaDeVida — periféricos, monitores e impresora", () => {
 });
 
 describe("construirHojaDeVida — observaciones y novedades", () => {
+  it("no cuenta como cambio de equipo la recepción de la carga inicial, pero sí su entrega posterior", () => {
+    const hoja = construirHojaDeVida(
+      datosBase({
+        vigentes: [PC_COMPLETO],
+        historial: [
+          { codigo: "PC-014", tipo: "pc_mesa", fechaDesde: "2025-07-09", fechaHasta: null, motivo: MOTIVO_CARGA_INICIAL },
+          { codigo: "MON-0012", tipo: "monitor", fechaDesde: "2025-07-09", fechaHasta: "2026-01-10", motivo: MOTIVO_CARGA_INICIAL },
+        ],
+      }),
+    );
+    expect(hoja.observaciones).toEqual([
+      "10/01/2026: ENTREGA MON-0012 (MONITOR)",
+      "EQUIPO PRINCIPAL",
+    ]);
+  });
+
   it("agrupa los movimientos por día, evento y motivo, en orden cronológico, y suma las observaciones del PC", () => {
     const hoja = construirHojaDeVida(
       datosBase({
