@@ -27,7 +27,7 @@ Branch: fase-4-hoja-de-vida (sobre fase-3-asignaciones). Delivery: ask-on-risk. 
 - A1: DISCO y UNIDAD DE DISCO muestran ambos `unidadDisco` (en el original llevan el mismo valor); CAPACIDAD = `capacidadDisco`.
 - A2: si el funcionario tiene más de un PC vigente, la hoja usa el de asignación más reciente y menciona los demás en Observaciones.
 - A3: Observaciones agrupa los movimientos del mismo día, tipo (RECIBE/ENTREGA) y motivo en una línea, en orden cronológico.
-- A4: el bloque de firmas se imprime una sola vez, al final, según el orden de la tabla del plan; la repetición tras PERIFÉRICOS se consulta con el usuario.
+- A4: el bloque de firmas se imprime una sola vez, al final (confirmado por el usuario en L2).
 - A5: se conserva la etiqueta literal "REVISADOR POR:" del formato aprobado.
 - A6: la hoja ocupa una página carta; si hay muchas observaciones o novedades, continúa en una segunda página sin cortar bloques.
 
@@ -49,4 +49,5 @@ Branch: fase-4-hoja-de-vida (sobre fase-3-asignaciones). Delivery: ask-on-risk. 
 - 2026-11-14: verificado en navegador el arreglo de selects de la fase 3 (el tipo muestra "PC de mesa").
 - 2026-11-14: las firmas de la base real cambiaron a nombres reales durante la sesión: fue el usuario desde su next dev; las pruebas de escritura usan copias.
 - Pendiente con el usuario: A4 (¿repetir el bloque de firmas tras PERIFÉRICOS como en el original?).
+- L2 (2026-11-14, usuario): "Asi esta bien, en el pdf que te pase estaba asi por temas de la paginacion pero veo que lo arreglaste" → A4 confirmada: las firmas van una sola vez, al final. La repetición del original era un efecto de la paginación del Excel.
 - Risk: none (sin migraciones; la única escritura nueva es el upsert de la fila de configuración, que ya existía; @page y print:hidden solo afectan la impresión).
