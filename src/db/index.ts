@@ -2,9 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
+import { RUTA_DB } from "./rutas";
 import * as schema from "./schema";
 
-export const RUTA_DB = path.join(process.cwd(), "data", "rastro.db");
+export { RUTA_DB };
 
 /**
  * Abre una conexión con la configuración obligatoria del proyecto.
