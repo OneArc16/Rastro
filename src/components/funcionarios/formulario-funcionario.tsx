@@ -7,13 +7,9 @@ import { crearFuncionario, actualizarFuncionario } from "@/acciones/funcionarios
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Selector } from "@/components/selector";
+
+const SIN_UBICACION = "";
 
 type Ubicacion = { id: number; nombre: string };
 
@@ -97,23 +93,16 @@ export function FormularioFuncionario({ ubicaciones, funcionario }: Props) {
       </div>
 
       <div className="space-y-2">
-        <Label>Ubicación</Label>
-        <Select
-          value={ubicacionSeleccionada}
-          onValueChange={(valor) => setValue("ubicacionId", (valor as string) ?? "")}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Sin ubicación" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">Sin ubicación</SelectItem>
-            {ubicaciones.map((ubicacion) => (
-              <SelectItem key={ubicacion.id} value={String(ubicacion.id)}>
-                {ubicacion.nombre}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Label htmlFor="ubicacionId">Ubicación</Label>
+        <Selector
+          id="ubicacionId"
+          opciones={[
+            { valor: SIN_UBICACION, etiqueta: "Sin ubicación" },
+            ...ubicaciones.map((u) => ({ valor: String(u.id), etiqueta: u.nombre })),
+          ]}
+          valor={ubicacionSeleccionada}
+          alCambiar={(valor) => setValue("ubicacionId", valor)}
+        />
       </div>
 
       {errorGeneral && <p className="text-sm text-destructive">{errorGeneral}</p>}

@@ -11,14 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { opcionesDesde, Selector } from "@/components/selector";
+
+const OPCIONES_TIPO = opcionesDesde(ETIQUETAS_TIPO);
+const OPCIONES_ESTADO_EDITABLE = [
+  { valor: "operativo", etiqueta: "Operativo" },
+  { valor: "en_reparacion", etiqueta: "En reparación" },
+];
 
 type TipoActivo = (typeof TIPOS_ACTIVO)[number];
 
@@ -211,22 +211,13 @@ export function FormularioActivo({ propuestas, activo }: Props) {
         <h2 className="text-lg font-semibold">Datos generales</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Tipo *</Label>
-            <Select
-              value={tipoSeleccionado}
-              onValueChange={(valor) => alCambiarTipo(valor as TipoActivo)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(ETIQUETAS_TIPO).map(([valor, etiqueta]) => (
-                  <SelectItem key={valor} value={valor}>
-                    {etiqueta}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="tipo">Tipo *</Label>
+            <Selector
+              id="tipo"
+              opciones={OPCIONES_TIPO}
+              valor={tipoSeleccionado}
+              alCambiar={(valor) => alCambiarTipo(valor as TipoActivo)}
+            />
           </div>
 
           <div className="space-y-2">
@@ -246,21 +237,15 @@ export function FormularioActivo({ propuestas, activo }: Props) {
           <CampoTexto nombre="color" etiqueta="Color" register={register} placeholder="NEGRO" />
 
           <div className="space-y-2">
-            <Label>Estado</Label>
-            <Select
-              value={estadoSeleccionado}
-              onValueChange={(valor) =>
+            <Label htmlFor="estado">Estado</Label>
+            <Selector
+              id="estado"
+              opciones={OPCIONES_ESTADO_EDITABLE}
+              valor={estadoSeleccionado}
+              alCambiar={(valor) =>
                 setValue("estado", valor as "operativo" | "en_reparacion")
               }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="operativo">Operativo</SelectItem>
-                <SelectItem value="en_reparacion">En reparación</SelectItem>
-              </SelectContent>
-            </Select>
+            />
           </div>
 
           <div className="space-y-2">

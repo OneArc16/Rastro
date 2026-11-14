@@ -18,13 +18,7 @@ import { ETIQUETAS_ESTADO, ETIQUETAS_TIPO } from "@/lib/etiquetas";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { opcionesDesde, Selector, type Opcion } from "@/components/selector";
 import {
   Table,
   TableBody,
@@ -114,24 +108,18 @@ function FiltroSelect({
   etiqueta: string;
   valor: string;
   alCambiar: (valor: string) => void;
-  opciones: Array<{ valor: string; etiqueta: string }>;
+  opciones: Opcion[];
 }) {
   return (
     <div className="space-y-1">
       <Label className="text-xs text-muted-foreground">{etiqueta}</Label>
-      <Select value={valor} onValueChange={(v) => alCambiar((v as string) ?? TODOS)}>
-        <SelectTrigger size="sm" className="w-full min-w-36">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={TODOS}>Todos</SelectItem>
-          {opciones.map((opcion) => (
-            <SelectItem key={opcion.valor} value={opcion.valor}>
-              {opcion.etiqueta}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <Selector
+        tamano="sm"
+        className="w-full min-w-36"
+        opciones={[{ valor: TODOS, etiqueta: "Todos" }, ...opciones]}
+        valor={valor}
+        alCambiar={(v) => alCambiar(v || TODOS)}
+      />
     </div>
   );
 }
@@ -198,19 +186,13 @@ export function TablaInventario({ datos }: { datos: FilaInventario[] }) {
           etiqueta="Tipo"
           valor={filtroTipo}
           alCambiar={setFiltroTipo}
-          opciones={Object.entries(ETIQUETAS_TIPO).map(([valor, etiqueta]) => ({
-            valor,
-            etiqueta,
-          }))}
+          opciones={opcionesDesde(ETIQUETAS_TIPO)}
         />
         <FiltroSelect
           etiqueta="Estado"
           valor={filtroEstado}
           alCambiar={setFiltroEstado}
-          opciones={Object.entries(ETIQUETAS_ESTADO).map(([valor, etiqueta]) => ({
-            valor,
-            etiqueta,
-          }))}
+          opciones={opcionesDesde(ETIQUETAS_ESTADO)}
         />
         <FiltroSelect
           etiqueta="Ubicación"
