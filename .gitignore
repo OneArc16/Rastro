@@ -45,3 +45,7 @@ next-env.d.ts
 
 # artefactos de Windows
 *Zone.Identifier
+
+# Datos reales de la empresa: no se versionan
+docs/*.xlsx
+docs/*.xls
