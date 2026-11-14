@@ -24,10 +24,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className="antialiased">
         <div className="flex min-h-dvh flex-col md:flex-row">
           <BarraLateral />
           <div className="flex min-w-0 flex-1 flex-col">
