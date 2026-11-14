@@ -9,20 +9,24 @@ export function CampoFecha({
   valor,
   alCambiar,
   etiqueta = "Fecha",
+  id = "fecha-accion",
+  obligatorio = true,
 }: {
   valor: string;
   alCambiar: (valor: string) => void;
   etiqueta?: string;
+  id?: string;
+  obligatorio?: boolean;
 }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor="fecha-accion">{etiqueta}</Label>
+      <Label htmlFor={id}>{etiqueta}</Label>
       <Input
-        id="fecha-accion"
+        id={id}
         type="date"
         value={valor}
         onChange={(e) => alCambiar(e.target.value)}
-        required
+        required={obligatorio}
       />
     </div>
   );
@@ -32,14 +36,16 @@ export function CampoMotivo({
   valor,
   alCambiar,
   placeholder,
+  etiqueta = "Motivo",
 }: {
   valor: string;
   alCambiar: (valor: string) => void;
   placeholder?: string;
+  etiqueta?: string;
 }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor="motivo-accion">Motivo</Label>
+      <Label htmlFor="motivo-accion">{etiqueta}</Label>
       <Input
         id="motivo-accion"
         value={valor}

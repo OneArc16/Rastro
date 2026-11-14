@@ -15,6 +15,22 @@ export function fechaIsoLocal(fecha: Date): string {
   ].join("-");
 }
 
+/** Suma (o resta) días a una fecha "AAAA-MM-DD". Usa UTC para no depender del huso horario. */
+export function sumarDias(fechaIso: string, dias: number): string {
+  const [anio, mes, dia] = fechaIso.split("-").map(Number);
+  const fecha = new Date(Date.UTC(anio, mes - 1, dia + dias));
+  return fecha.toISOString().slice(0, 10);
+}
+
+/** Días desde `desde` hasta `hasta` (negativo si `hasta` es anterior). */
+export function diasEntre(desde: string, hasta: string): number {
+  const aUtc = (iso: string) => {
+    const [anio, mes, dia] = iso.split("-").map(Number);
+    return Date.UTC(anio, mes - 1, dia);
+  };
+  return Math.round((aUtc(hasta) - aUtc(desde)) / 86_400_000);
+}
+
 /** Fecha de hoy en formato "AAAA-MM-DD" (hora local). */
 export function hoyIso(): string {
   return fechaIsoLocal(new Date());

@@ -15,6 +15,7 @@ import {
   SelectorDestino,
   type TipoDestino,
 } from "@/components/acciones/campos";
+import { DialogoMantenimiento } from "@/components/mantenimientos/dialogo-mantenimiento";
 import { Selector } from "@/components/selector";
 import { Label } from "@/components/ui/label";
 import type { Destinos } from "@/db/consultas";
@@ -205,6 +206,7 @@ export function AccionesActivo({
       ) : (
         <DialogoMovimiento activo={activo} destinos={destinos} modo="asignar" />
       )}
+      <DialogoMantenimiento activo={activo} />
       <DialogoBaja activo={activo} />
     </div>
   );

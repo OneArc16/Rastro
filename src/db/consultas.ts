@@ -3,9 +3,10 @@
  * Toda la lectura de datos de las pantallas pasa por aquí: las páginas
  * no arman SQL ni conocen los detalles del esquema.
  */
-import { and, asc, count, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import type { DatosHojaDeVida } from "@/dominio/hoja-de-vida";
+import { garantiasPorVencer, pendientesDeMantenimiento } from "@/dominio/mantenimientos";
 import { siguienteCodigo } from "@/lib/codigos";
 import { db } from "./index";
 import {
@@ -42,13 +43,8 @@ export function resumenInicio() {
     .orderBy(desc(count()))
     .all();
 
-  // Disponible = operativo y sin asignación vigente
-  const disponibles = db
-    .select({ total: count() })
-    .from(activos)
-    .leftJoin(asignaciones, and(eq(asignaciones.activoId, activos.id), vigente))
-    .where(and(eq(activos.estado, "operativo"), isNull(asignaciones.id)))
-    .get()?.total ?? 0;
+  // Misma definición de "disponible" que el inventario
+  const disponibles = listarActivos().filter((activo) => activo.disponible);
 
   const totalFuncionarios = db
     .select({ total: count() })
@@ -57,6 +53,55 @@ export function resumenInicio() {
     .get()?.total ?? 0;
 
   return { totalActivos, porEstado, porTipo, disponibles, totalFuncionarios };
+}
+
+/** Mantenimientos vencidos y próximos a la fecha dada. */
+export function alertasDeMantenimiento(hoy: string) {
+  const lista = db
+    .select({
+      id: mantenimientos.id,
+      activoId: mantenimientos.activoId,
+      codigo: activos.codigo,
+      estadoActivo: activos.estado,
+      fecha: mantenimientos.fecha,
+      proximaFecha: mantenimientos.proximaFecha,
+      tipo: mantenimientos.tipo,
+    })
+    .from(mantenimientos)
+    .innerJoin(activos, eq(activos.id, mantenimientos.activoId))
+    .all();
+  return pendientesDeMantenimiento(lista, hoy);
+}
+
+/** Activos cuya garantía vence pronto, a la fecha dada. */
+export function alertasDeGarantia(hoy: string) {
+  const lista = db
+    .select({
+      id: activos.id,
+      codigo: activos.codigo,
+      tipo: activos.tipo,
+      garantiaHasta: activos.garantiaHasta,
+      estado: activos.estado,
+    })
+    .from(activos)
+    .all();
+  return garantiasPorVencer(lista, hoy);
+}
+
+/** Activos que admiten mantenimiento (no dados de baja), para el registro rápido. */
+export function listarActivosParaMantenimiento() {
+  return db
+    .select({
+      id: activos.id,
+      codigo: activos.codigo,
+      tipo: activos.tipo,
+      marca: activos.marca,
+      modelo: activos.modelo,
+    })
+    .from(activos)
+    .where(ne(activos.estado, "dado_de_baja"))
+    .orderBy(asc(activos.codigo))
+    .all();
 }
 
 /**
