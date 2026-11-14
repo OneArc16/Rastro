@@ -41,6 +41,13 @@ export default async function PaginaFichaFuncionario({
         {!funcionario.retirado && (
           <div className="flex flex-wrap gap-2">
             <Button
+              render={
+                <Link href={`/funcionarios/${funcionario.id}/hoja-de-vida`}>
+                  Hoja de vida
+                </Link>
+              }
+            />
+            <Button
               variant="outline"
               render={<Link href={`/funcionarios/${funcionario.id}/editar`}>Editar</Link>}
             />

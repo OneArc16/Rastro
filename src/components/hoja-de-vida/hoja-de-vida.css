@@ -1,0 +1,139 @@
+/*
+ * Formato "Hoja de vida equipos de cómputo" (docs/HOJAS DE VIDA DE PC.pdf).
+ * Medidas físicas para que pantalla e impresión sean idénticas en tamaño carta.
+ * Colores medidos sobre el original: barra #4472C4, borde de barra #264275.
+ */
+
+.hv-contenedor {
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+/* El relleno replica los márgenes de @page en src/app/globals.css */
+.hv-hoja {
+  box-sizing: border-box;
+  width: 8.5in;
+  min-height: 11in;
+  margin: 0 auto;
+  padding: 0.55in 0.7in;
+  background: #ffffff;
+  color: #000000;
+  /* Carlito tiene las mismas medidas que Calibri, la fuente del original */
+  font-family: var(--fuente-hoja), Calibri, Arial, sans-serif;
+  font-size: 7.5pt;
+  line-height: 1.15;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.2);
+}
+
+.hv-seccion {
+  margin-top: 9pt;
+  break-inside: avoid;
+}
+
+.hv-barra {
+  margin: 0 0 1pt;
+  padding: 1.5pt 0;
+  border: 0.75pt solid #264275;
+  border-radius: 2pt;
+  background: #4472c4;
+  color: #ffffff;
+  font-size: 9pt;
+  font-weight: 400;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.hv-barraGrande {
+  font-size: 11pt;
+}
+
+.hv-rejilla {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.hv-rejilla td {
+  height: 10.6pt;
+  padding: 0 1.5pt;
+  border: 0.75pt solid #000000;
+  vertical-align: bottom;
+  overflow-wrap: break-word;
+}
+
+.hv-etiqueta {
+  font-weight: 700;
+}
+
+.hv-derecha {
+  text-align: right;
+}
+
+/* Encabezado */
+.hv-celdaLogo {
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+.hv-logo {
+  display: inline-block;
+  max-width: 100%;
+  height: 38pt;
+  width: auto;
+}
+
+.hv-titulo {
+  font-size: 10.5pt;
+  font-weight: 700;
+  letter-spacing: 0.3pt;
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+/* Observaciones */
+.hv-observaciones {
+  min-height: 70pt;
+  padding: 3pt 2pt 0;
+}
+
+.hv-observaciones p {
+  margin: 0 0 1.5pt;
+}
+
+/* Novedades */
+.hv-novedad {
+  margin-bottom: 3pt;
+  break-inside: avoid;
+}
+
+.hv-observacionNovedad {
+  padding: 1pt 2pt 0;
+}
+
+/* Firmas */
+.hv-firmas {
+  margin-top: 14pt;
+  break-inside: avoid;
+}
+
+.hv-firmas td {
+  height: 9pt;
+  font-size: 6.5pt;
+  vertical-align: middle;
+}
+
+@media print {
+  .hv-contenedor {
+    overflow: visible;
+    padding: 0;
+  }
+
+  /* En papel, los márgenes los pone @page en cada página */
+  .hv-hoja {
+    width: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+}

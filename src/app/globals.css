@@ -128,3 +128,17 @@
     @apply font-sans;
   }
 }
+/* Impresión en carta. Estos márgenes deben coincidir con el relleno de .hoja
+   en src/components/hoja-de-vida/hoja-de-vida.css */
+@page {
+  size: letter;
+  margin: 0.55in 0.7in;
+}
+
+@media print {
+  body {
+    background: #ffffff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

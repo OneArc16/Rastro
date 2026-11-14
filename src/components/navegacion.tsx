@@ -62,7 +62,7 @@ function ListaEnlaces({ alNavegar }: { alNavegar?: () => void }) {
 /** Barra lateral fija en escritorio. */
 export function BarraLateral() {
   return (
-    <aside className="hidden w-56 shrink-0 border-r bg-background md:flex md:flex-col">
+    <aside className="hidden w-56 shrink-0 border-r bg-background md:flex md:flex-col print:hidden">
       <div className="flex h-14 items-center border-b px-5">
         <Link href="/" className="text-lg font-bold tracking-tight">
           Rastro
@@ -79,7 +79,7 @@ export function BarraLateral() {
 export function BarraMovil() {
   const [abierto, setAbierto] = useState(false);
   return (
-    <header className="flex h-14 items-center gap-3 border-b bg-background px-4 md:hidden">
+    <header className="flex h-14 items-center gap-3 border-b bg-background px-4 md:hidden print:hidden">
       <Sheet open={abierto} onOpenChange={setAbierto}>
         <SheetTrigger
           render={

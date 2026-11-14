@@ -30,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <BarraLateral />
           <div className="flex min-w-0 flex-1 flex-col">
             <BarraMovil />
-            <main className="flex-1 p-4 md:p-8">{children}</main>
+            <main className="flex-1 p-4 md:p-8 print:p-0">{children}</main>
           </div>
         </div>
       </body>

@@ -6,5 +6,6 @@ const formatoPesos = new Intl.NumberFormat("es-CO", {
 
 export function formatearPesos(valor: number | null | undefined): string {
   if (valor == null) return "—";
-  return formatoPesos.format(valor);
+  // Intl separa el símbolo con un espacio no separable; se usa uno normal
+  return formatoPesos.format(valor).replace(/ /g, " ");
 }

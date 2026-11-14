@@ -3,8 +3,9 @@
  * Toda la lectura de datos de las pantallas pasa por aquí: las páginas
  * no arman SQL ni conocen los detalles del esquema.
  */
-import { and, asc, count, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
+import type { DatosHojaDeVida } from "@/dominio/hoja-de-vida";
 import { siguienteCodigo } from "@/lib/codigos";
 import { db } from "./index";
 import {
@@ -226,6 +227,92 @@ export function obtenerFichaFuncionario(id: number) {
   return {
     funcionario,
     vigentes: historial.filter((h) => h.fechaHasta === null),
+    historial,
+  };
+}
+
+/** Todo lo que necesita la hoja de vida de un funcionario, ya consultado. */
+export function obtenerDatosHojaDeVida(funcionarioId: number): DatosHojaDeVida | null {
+  const funcionario = db
+    .select({
+      nombre: funcionarios.nombre,
+      telefono: funcionarios.telefono,
+      ubicacionId: funcionarios.ubicacionId,
+      ubicacion: ubicaciones.nombre,
+    })
+    .from(funcionarios)
+    .leftJoin(ubicaciones, eq(ubicaciones.id, funcionarios.ubicacionId))
+    .where(eq(funcionarios.id, funcionarioId))
+    .get();
+  if (!funcionario) return null;
+
+  const asignados = db
+    .select({ activo: activos, fechaDesde: asignaciones.fechaDesde })
+    .from(asignaciones)
+    .innerJoin(activos, eq(activos.id, asignaciones.activoId))
+    .where(and(eq(asignaciones.funcionarioId, funcionarioId), vigente))
+    .all();
+
+  const ids = asignados.map((a) => a.activo.id);
+  const movimientos = ids.length
+    ? db.select().from(asignaciones).where(inArray(asignaciones.activoId, ids)).all()
+    : [];
+  const historialMantenimiento = ids.length
+    ? db.select().from(mantenimientos).where(inArray(mantenimientos.activoId, ids)).all()
+    : [];
+
+  const ultimoMovimiento = (activoId: number) =>
+    movimientos
+      .filter((m) => m.activoId === activoId)
+      .flatMap((m) => [m.fechaDesde, m.fechaHasta ?? m.fechaDesde])
+      .reduce((mayor, fecha) => (fecha > mayor ? fecha : mayor), "");
+
+  const impresorasDeUbicacion =
+    funcionario.ubicacionId === null
+      ? []
+      : db
+          .select({ activo: activos })
+          .from(asignaciones)
+          .innerJoin(activos, eq(activos.id, asignaciones.activoId))
+          .where(
+            and(
+              eq(asignaciones.ubicacionId, funcionario.ubicacionId),
+              eq(activos.tipo, "impresora"),
+              vigente,
+            ),
+          )
+          .orderBy(asc(activos.codigo))
+          .all()
+          .map((fila) => fila.activo);
+
+  const historial = db
+    .select({
+      codigo: activos.codigo,
+      tipo: activos.tipo,
+      fechaDesde: asignaciones.fechaDesde,
+      fechaHasta: asignaciones.fechaHasta,
+      motivo: asignaciones.motivo,
+    })
+    .from(asignaciones)
+    .innerJoin(activos, eq(activos.id, asignaciones.activoId))
+    .where(eq(asignaciones.funcionarioId, funcionarioId))
+    .orderBy(asc(asignaciones.fechaDesde), asc(asignaciones.id))
+    .all();
+
+  return {
+    funcionario: {
+      nombre: funcionario.nombre,
+      telefono: funcionario.telefono,
+      ubicacion: funcionario.ubicacion,
+    },
+    configuracion: obtenerConfiguracion(),
+    vigentes: asignados.map(({ activo, fechaDesde }) => ({
+      activo,
+      fechaDesde,
+      ultimoMovimiento: ultimoMovimiento(activo.id),
+      mantenimientos: historialMantenimiento.filter((m) => m.activoId === activo.id),
+    })),
+    impresorasDeUbicacion,
     historial,
   };
 }

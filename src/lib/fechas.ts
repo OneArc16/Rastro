@@ -6,12 +6,16 @@ export function formatearFecha(fechaIso: string | null | undefined): string {
   return `${dia}/${mes}/${anio}`;
 }
 
+/** Fecha en formato "AAAA-MM-DD" según la hora local. */
+export function fechaIsoLocal(fecha: Date): string {
+  return [
+    fecha.getFullYear(),
+    String(fecha.getMonth() + 1).padStart(2, "0"),
+    String(fecha.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 /** Fecha de hoy en formato "AAAA-MM-DD" (hora local). */
 export function hoyIso(): string {
-  const ahora = new Date();
-  return [
-    ahora.getFullYear(),
-    String(ahora.getMonth() + 1).padStart(2, "0"),
-    String(ahora.getDate()).padStart(2, "0"),
-  ].join("-");
+  return fechaIsoLocal(new Date());
 }
