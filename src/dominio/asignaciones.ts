@@ -7,15 +7,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import type { Db } from "@/db";
 import { activos, asignaciones, funcionarios, ubicaciones } from "@/db/schema";
 import { formatearFecha } from "@/lib/fechas";
-import { FORMATO_FECHA_ISO } from "@/lib/validacion/comunes";
-
-/** Error esperado por una regla de negocio; su mensaje se muestra al usuario. */
-export class ErrorDeNegocio extends Error {
-  constructor(mensaje: string) {
-    super(mensaje);
-    this.name = "ErrorDeNegocio";
-  }
-}
+import { ErrorDeNegocio, validarFecha } from "./comunes";
 
 export type Destino = { funcionarioId: number } | { ubicacionId: number };
 
@@ -24,12 +16,6 @@ type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 // ---------------------------------------------------------------------------
 // Validaciones internas
 // ---------------------------------------------------------------------------
-
-function validarFecha(fecha: string) {
-  if (!FORMATO_FECHA_ISO.test(fecha)) {
-    throw new ErrorDeNegocio("La fecha debe tener el formato AAAA-MM-DD");
-  }
-}
 
 function obtenerActivo(tx: Tx, activoId: number) {
   const activo = tx.select().from(activos).where(eq(activos.id, activoId)).get();

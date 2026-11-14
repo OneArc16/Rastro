@@ -13,11 +13,11 @@ import {
   asignar,
   darDeBaja,
   devolver,
-  ErrorDeNegocio,
   intercambiar,
   retirarFuncionario,
   trasladar,
 } from "./asignaciones";
+import { ErrorDeNegocio } from "./comunes";
 
 let db: Db;
 let ana: number;

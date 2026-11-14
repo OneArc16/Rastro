@@ -1,13 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import type { z } from "zod";
 import { db } from "@/db";
 import {
   asignar,
   darDeBaja,
   devolver,
-  ErrorDeNegocio,
   intercambiar,
   retirarFuncionario,
   trasladar,
@@ -20,36 +17,8 @@ import {
   esquemaMovimiento,
   esquemaRetiro,
 } from "@/lib/validacion/asignaciones";
-import { primerErrorZod } from "@/lib/validacion/comunes";
+import { ejecutar } from "./ejecutar";
 import type { ResultadoAccion } from "./resultado";
-
-/**
- * Valida la entrada, ejecuta la operación de dominio y traduce los errores
- * de negocio a un resultado que el formulario puede mostrar.
- */
-function ejecutar<T extends z.ZodType>(
-  esquema: T,
-  datos: unknown,
-  operacion: (valido: z.output<T>) => void,
-): ResultadoAccion {
-  const resultado = esquema.safeParse(datos);
-  if (!resultado.success) {
-    return { ok: false, error: primerErrorZod(resultado.error) };
-  }
-
-  try {
-    operacion(resultado.data);
-  } catch (error) {
-    if (error instanceof ErrorDeNegocio) {
-      return { ok: false, error: error.message };
-    }
-    throw error;
-  }
-
-  // Un movimiento cambia inventario, fichas, funcionarios y ubicaciones a la vez
-  revalidatePath("/", "layout");
-  return { ok: true };
-}
 
 export async function asignarActivo(datos: unknown): Promise<ResultadoAccion> {
   return ejecutar(esquemaMovimiento, datos, (d) =>
