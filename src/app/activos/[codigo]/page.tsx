@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { obtenerFichaActivo } from "@/db/consultas";
+import {
+  listarActivosAsignados,
+  listarDestinos,
+  obtenerFichaActivo,
+} from "@/db/consultas";
+import { AccionesActivo } from "@/components/activos/acciones-activo";
 import { DetalleSpecs } from "@/components/activos/detalle-specs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,6 +64,14 @@ export default async function PaginaFichaActivo({
           />
         )}
       </div>
+
+      <AccionesActivo
+        activo={{ id: activo.id, codigo: activo.codigo }}
+        dadoDeBaja={activo.estado === "dado_de_baja"}
+        tieneVigente={asignacionVigente !== null}
+        destinos={listarDestinos()}
+        asignados={listarActivosAsignados()}
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
@@ -139,7 +152,16 @@ export default async function PaginaFichaActivo({
                 {historial.map((asignacion) => (
                   <li key={asignacion.id} className="text-sm">
                     <p className="font-medium">
-                      {asignacion.funcionario ?? asignacion.ubicacion}
+                      {asignacion.funcionarioId !== null ? (
+                        <Link
+                          href={`/funcionarios/${asignacion.funcionarioId}`}
+                          className="underline-offset-4 hover:underline"
+                        >
+                          {asignacion.funcionario}
+                        </Link>
+                      ) : (
+                        asignacion.ubicacion
+                      )}
                       {asignacion.fechaHasta === null && (
                         <Badge className="ml-2" variant="default">
                           Vigente

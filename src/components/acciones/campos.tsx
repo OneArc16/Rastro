@@ -1,0 +1,107 @@
+"use client";
+
+import type { Destinos } from "@/db/consultas";
+import { Selector } from "@/components/selector";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export function CampoFecha({
+  valor,
+  alCambiar,
+  etiqueta = "Fecha",
+}: {
+  valor: string;
+  alCambiar: (valor: string) => void;
+  etiqueta?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="fecha-accion">{etiqueta}</Label>
+      <Input
+        id="fecha-accion"
+        type="date"
+        value={valor}
+        onChange={(e) => alCambiar(e.target.value)}
+        required
+      />
+    </div>
+  );
+}
+
+export function CampoMotivo({
+  valor,
+  alCambiar,
+  placeholder,
+}: {
+  valor: string;
+  alCambiar: (valor: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="motivo-accion">Motivo</Label>
+      <Input
+        id="motivo-accion"
+        value={valor}
+        onChange={(e) => alCambiar(e.target.value)}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+}
+
+export type TipoDestino = "funcionario" | "ubicacion";
+
+const OPCIONES_TIPO_DESTINO = [
+  { valor: "funcionario", etiqueta: "Funcionario" },
+  { valor: "ubicacion", etiqueta: "Ubicación (equipo compartido)" },
+];
+
+/** Elige a quién va el activo: un funcionario o una ubicación, nunca ambos. */
+export function SelectorDestino({
+  destinos,
+  tipo,
+  destinoId,
+  alCambiarTipo,
+  alCambiarDestino,
+}: {
+  destinos: Destinos;
+  tipo: TipoDestino;
+  destinoId: string;
+  alCambiarTipo: (tipo: TipoDestino) => void;
+  alCambiarDestino: (id: string) => void;
+}) {
+  const opciones =
+    tipo === "funcionario"
+      ? destinos.funcionarios.map((f) => ({ valor: String(f.id), etiqueta: f.nombre }))
+      : destinos.ubicaciones.map((u) => ({ valor: String(u.id), etiqueta: u.nombre }));
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="tipo-destino">Asignar a</Label>
+        <Selector
+          id="tipo-destino"
+          opciones={OPCIONES_TIPO_DESTINO}
+          valor={tipo}
+          alCambiar={(valor) => {
+            alCambiarTipo(valor as TipoDestino);
+            alCambiarDestino("");
+          }}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="destino">
+          {tipo === "funcionario" ? "Funcionario" : "Ubicación"}
+        </Label>
+        <Selector
+          id="destino"
+          opciones={opciones}
+          valor={destinoId}
+          alCambiar={alCambiarDestino}
+          placeholder="Seleccione..."
+        />
+      </div>
+    </div>
+  );
+}

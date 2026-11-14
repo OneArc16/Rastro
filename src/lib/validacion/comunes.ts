@@ -19,6 +19,13 @@ export const fechaOpcional = z.preprocess(
     .optional(),
 );
 
+export const fechaObligatoria = z
+  .string({ message: "La fecha es obligatoria" })
+  .regex(FORMATO_FECHA_ISO, "Use el formato AAAA-MM-DD");
+
+export const idPositivo = (mensaje: string) =>
+  z.coerce.number({ message: mensaje }).int(mensaje).positive(mensaje);
+
 export const enteroOpcional = z.preprocess(
   vacioAUndefined,
   z.coerce

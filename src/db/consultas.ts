@@ -112,6 +112,8 @@ export function obtenerFichaActivo(codigo: string) {
       fechaDesde: asignaciones.fechaDesde,
       fechaHasta: asignaciones.fechaHasta,
       motivo: asignaciones.motivo,
+      funcionarioId: asignaciones.funcionarioId,
+      ubicacionId: asignaciones.ubicacionId,
       funcionario: funcionarios.nombre,
       ubicacion: ubicaciones.nombre,
     })
@@ -119,7 +121,7 @@ export function obtenerFichaActivo(codigo: string) {
     .leftJoin(funcionarios, eq(funcionarios.id, asignaciones.funcionarioId))
     .leftJoin(ubicaciones, eq(ubicaciones.id, asignaciones.ubicacionId))
     .where(eq(asignaciones.activoId, activo.id))
-    .orderBy(desc(asignaciones.fechaDesde))
+    .orderBy(desc(asignaciones.fechaDesde), desc(asignaciones.id))
     .all();
 
   const historialMantenimientos = db
@@ -156,6 +158,78 @@ export function propuestasDeCodigo(): Record<TipoActivo, string> {
   ) as Record<TipoActivo, string>;
 }
 
+/** Posibles destinos de una asignación: funcionarios no retirados y ubicaciones. */
+export function listarDestinos() {
+  const funcionariosActivos = db
+    .select({ id: funcionarios.id, nombre: funcionarios.nombre })
+    .from(funcionarios)
+    .where(eq(funcionarios.retirado, false))
+    .orderBy(asc(funcionarios.nombre))
+    .all();
+  return { funcionarios: funcionariosActivos, ubicaciones: listarUbicacionesSimple() };
+}
+
+export type Destinos = ReturnType<typeof listarDestinos>;
+
+/** Activos con asignación vigente, para elegir la contraparte de un intercambio. */
+export function listarActivosAsignados() {
+  return db
+    .select({
+      id: activos.id,
+      codigo: activos.codigo,
+      tipo: activos.tipo,
+      responsable: funcionarios.nombre,
+      ubicacion: ubicaciones.nombre,
+    })
+    .from(activos)
+    .innerJoin(asignaciones, and(eq(asignaciones.activoId, activos.id), vigente))
+    .leftJoin(funcionarios, eq(funcionarios.id, asignaciones.funcionarioId))
+    .leftJoin(ubicaciones, eq(ubicaciones.id, asignaciones.ubicacionId))
+    .orderBy(asc(activos.codigo))
+    .all();
+}
+
+/** Ficha de funcionario: datos, equipos vigentes e historial completo. */
+export function obtenerFichaFuncionario(id: number) {
+  const funcionario = db
+    .select({
+      id: funcionarios.id,
+      nombre: funcionarios.nombre,
+      cargo: funcionarios.cargo,
+      telefono: funcionarios.telefono,
+      retirado: funcionarios.retirado,
+      ubicacion: ubicaciones.nombre,
+    })
+    .from(funcionarios)
+    .leftJoin(ubicaciones, eq(ubicaciones.id, funcionarios.ubicacionId))
+    .where(eq(funcionarios.id, id))
+    .get();
+  if (!funcionario) return null;
+
+  const historial = db
+    .select({
+      id: asignaciones.id,
+      fechaDesde: asignaciones.fechaDesde,
+      fechaHasta: asignaciones.fechaHasta,
+      motivo: asignaciones.motivo,
+      activoCodigo: activos.codigo,
+      activoTipo: activos.tipo,
+      activoMarca: activos.marca,
+      activoModelo: activos.modelo,
+    })
+    .from(asignaciones)
+    .innerJoin(activos, eq(activos.id, asignaciones.activoId))
+    .where(eq(asignaciones.funcionarioId, id))
+    .orderBy(desc(asignaciones.fechaDesde), desc(asignaciones.id))
+    .all();
+
+  return {
+    funcionario,
+    vigentes: historial.filter((h) => h.fechaHasta === null),
+    historial,
+  };
+}
+
 /** Ubicaciones para poblar selects de formularios. */
 export function listarUbicacionesSimple() {
   return db
@@ -188,21 +262,42 @@ export function listarFuncionarios() {
     .all();
 }
 
+/** Ubicaciones con sus funcionarios activos y sus equipos compartidos vigentes. */
 export function listarUbicaciones() {
-  return db
-    .select({
-      id: ubicaciones.id,
-      nombre: ubicaciones.nombre,
-      funcionarios: count(funcionarios.id),
-    })
+  const lista = db
+    .select({ id: ubicaciones.id, nombre: ubicaciones.nombre })
     .from(ubicaciones)
-    .leftJoin(
-      funcionarios,
-      and(eq(funcionarios.ubicacionId, ubicaciones.id), eq(funcionarios.retirado, false)),
-    )
-    .groupBy(ubicaciones.id)
     .orderBy(asc(ubicaciones.nombre))
     .all();
+
+  const personas = db
+    .select({
+      id: funcionarios.id,
+      nombre: funcionarios.nombre,
+      ubicacionId: funcionarios.ubicacionId,
+    })
+    .from(funcionarios)
+    .where(eq(funcionarios.retirado, false))
+    .orderBy(asc(funcionarios.nombre))
+    .all();
+
+  const compartidos = db
+    .select({
+      codigo: activos.codigo,
+      tipo: activos.tipo,
+      ubicacionId: asignaciones.ubicacionId,
+    })
+    .from(asignaciones)
+    .innerJoin(activos, eq(activos.id, asignaciones.activoId))
+    .where(vigente)
+    .orderBy(asc(activos.codigo))
+    .all();
+
+  return lista.map((ubicacion) => ({
+    ...ubicacion,
+    funcionarios: personas.filter((p) => p.ubicacionId === ubicacion.id),
+    equiposCompartidos: compartidos.filter((c) => c.ubicacionId === ubicacion.id),
+  }));
 }
 
 /** Mantenimientos con su activo, los más recientes primero. */

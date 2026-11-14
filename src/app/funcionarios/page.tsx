@@ -26,7 +26,14 @@ export default function PaginaFuncionarios() {
         {filas.map((funcionario) => (
           <Card key={funcionario.id}>
             <CardHeader className="flex items-center justify-between pb-2">
-              <CardTitle className="text-base">{funcionario.nombre}</CardTitle>
+              <CardTitle className="text-base">
+                <Link
+                  href={`/funcionarios/${funcionario.id}`}
+                  className="underline-offset-4 hover:underline"
+                >
+                  {funcionario.nombre}
+                </Link>
+              </CardTitle>
               <Button
                 variant="outline"
                 size="sm"

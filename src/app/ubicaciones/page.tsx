@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { listarUbicaciones } from "@/db/consultas";
+import { ETIQUETAS_TIPO } from "@/lib/etiquetas";
 import { DialogoUbicacion } from "@/components/ubicaciones/dialogo-ubicacion";
 import {
   Card,
@@ -30,9 +32,48 @@ export default function PaginaUbicaciones() {
                 ubicacion={{ id: ubicacion.id, nombre: ubicacion.nombre }}
               />
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              {ubicacion.funcionarios}{" "}
-              {ubicacion.funcionarios === 1 ? "funcionario" : "funcionarios"}
+            <CardContent className="space-y-3 text-sm">
+              <div>
+                <p className="text-muted-foreground">Funcionarios</p>
+                {ubicacion.funcionarios.length === 0 ? (
+                  <p>—</p>
+                ) : (
+                  <ul>
+                    {ubicacion.funcionarios.map((f) => (
+                      <li key={f.id}>
+                        <Link
+                          href={`/funcionarios/${f.id}`}
+                          className="underline-offset-4 hover:underline"
+                        >
+                          {f.nombre}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div>
+                <p className="text-muted-foreground">Equipos compartidos</p>
+                {ubicacion.equiposCompartidos.length === 0 ? (
+                  <p>—</p>
+                ) : (
+                  <ul>
+                    {ubicacion.equiposCompartidos.map((e) => (
+                      <li key={e.codigo}>
+                        <Link
+                          href={`/activos/${e.codigo}`}
+                          className="font-mono underline-offset-4 hover:underline"
+                        >
+                          {e.codigo}
+                        </Link>{" "}
+                        <span className="text-muted-foreground">
+                          {ETIQUETAS_TIPO[e.tipo]}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </CardContent>
           </Card>
         ))}
