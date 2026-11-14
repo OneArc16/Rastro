@@ -4,6 +4,8 @@
  * no arman SQL ni conocen los detalles del esquema.
  */
 import { and, asc, count, desc, eq, isNull } from "drizzle-orm";
+import { alias } from "drizzle-orm/sqlite-core";
+import { siguienteCodigo } from "@/lib/codigos";
 import { db } from "./index";
 import {
   activos,
@@ -11,8 +13,11 @@ import {
   configuracion,
   funcionarios,
   mantenimientos,
+  TIPOS_ACTIVO,
   ubicaciones,
 } from "./schema";
+
+type TipoActivo = (typeof TIPOS_ACTIVO)[number];
 
 /** Condición de asignación vigente: fecha_hasta es null. */
 const vigente = isNull(asignaciones.fechaHasta);
@@ -53,8 +58,14 @@ export function resumenInicio() {
   return { totalActivos, porEstado, porTipo, disponibles, totalFuncionarios };
 }
 
-/** Activos con su responsable o ubicación vigente (para el inventario). */
+/**
+ * Activos con su responsable o ubicación vigente (para el inventario).
+ * "ubicacion" es la efectiva: la de la asignación directa o, si el activo
+ * está asignado a una persona, la ubicación de esa persona.
+ */
 export function listarActivos() {
+  const ubicacionDelFuncionario = alias(ubicaciones, "ubicacion_funcionario");
+
   return db
     .select({
       id: activos.id,
@@ -65,13 +76,92 @@ export function listarActivos() {
       serial: activos.serial,
       estado: activos.estado,
       responsable: funcionarios.nombre,
-      ubicacion: ubicaciones.nombre,
+      ubicacionAsignada: ubicaciones.nombre,
+      ubicacionResponsable: ubicacionDelFuncionario.nombre,
     })
     .from(activos)
     .leftJoin(asignaciones, and(eq(asignaciones.activoId, activos.id), vigente))
     .leftJoin(funcionarios, eq(funcionarios.id, asignaciones.funcionarioId))
     .leftJoin(ubicaciones, eq(ubicaciones.id, asignaciones.ubicacionId))
+    .leftJoin(
+      ubicacionDelFuncionario,
+      eq(ubicacionDelFuncionario.id, funcionarios.ubicacionId),
+    )
     .orderBy(asc(activos.codigo))
+    .all()
+    .map((fila) => ({
+      ...fila,
+      ubicacion: fila.ubicacionAsignada ?? fila.ubicacionResponsable,
+      disponible:
+        fila.estado === "operativo" &&
+        fila.responsable === null &&
+        fila.ubicacionAsignada === null,
+    }));
+}
+
+export type FilaInventario = ReturnType<typeof listarActivos>[number];
+
+/** Ficha completa de un activo: datos, historial de asignaciones y mantenimientos. */
+export function obtenerFichaActivo(codigo: string) {
+  const activo = db.select().from(activos).where(eq(activos.codigo, codigo)).get();
+  if (!activo) return null;
+
+  const historial = db
+    .select({
+      id: asignaciones.id,
+      fechaDesde: asignaciones.fechaDesde,
+      fechaHasta: asignaciones.fechaHasta,
+      motivo: asignaciones.motivo,
+      funcionario: funcionarios.nombre,
+      ubicacion: ubicaciones.nombre,
+    })
+    .from(asignaciones)
+    .leftJoin(funcionarios, eq(funcionarios.id, asignaciones.funcionarioId))
+    .leftJoin(ubicaciones, eq(ubicaciones.id, asignaciones.ubicacionId))
+    .where(eq(asignaciones.activoId, activo.id))
+    .orderBy(desc(asignaciones.fechaDesde))
+    .all();
+
+  const historialMantenimientos = db
+    .select()
+    .from(mantenimientos)
+    .where(eq(mantenimientos.activoId, activo.id))
+    .orderBy(desc(mantenimientos.fecha))
+    .all();
+
+  const asignacionVigente = historial.find((h) => h.fechaHasta === null) ?? null;
+
+  return { activo, historial, mantenimientos: historialMantenimientos, asignacionVigente };
+}
+
+/** Activo por id, para el formulario de edición. */
+export function obtenerActivoPorId(id: number) {
+  return db.select().from(activos).where(eq(activos.id, id)).get() ?? null;
+}
+
+export function obtenerFuncionarioPorId(id: number) {
+  return db.select().from(funcionarios).where(eq(funcionarios.id, id)).get() ?? null;
+}
+
+/** Código propuesto para cada tipo de activo, a partir de los códigos existentes. */
+export function propuestasDeCodigo(): Record<TipoActivo, string> {
+  const codigos = db
+    .select({ codigo: activos.codigo })
+    .from(activos)
+    .all()
+    .map((fila) => fila.codigo);
+
+  return Object.fromEntries(
+    TIPOS_ACTIVO.map((tipo) => [tipo, siguienteCodigo(tipo, codigos)]),
+  ) as Record<TipoActivo, string>;
+}
+
+/** Ubicaciones para poblar selects de formularios. */
+export function listarUbicacionesSimple() {
+  return db
+    .select({ id: ubicaciones.id, nombre: ubicaciones.nombre })
+    .from(ubicaciones)
+    .orderBy(asc(ubicaciones.nombre))
     .all();
 }
 
