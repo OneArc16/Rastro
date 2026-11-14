@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { obtenerDatosHojaDeVida } from "@/db/consultas";
 import { construirHojaDeVida } from "@/dominio/hoja-de-vida";
 import { BotonImprimir } from "@/components/hoja-de-vida/boton-imprimir";
 import { HojaDeVidaFormato } from "@/components/hoja-de-vida/hoja-de-vida-formato";
-import { Button } from "@/components/ui/button";
+import { BotonEnlace } from "@/components/boton-enlace";
 
 export const dynamic = "force-dynamic";
 
@@ -39,10 +38,9 @@ export default async function PaginaHojaDeVida({
           Hoja de vida — {datos.funcionario.nombre}
         </h1>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            render={<Link href={`/funcionarios/${id}`}>Volver</Link>}
-          />
+          <BotonEnlace variant="outline" href={`/funcionarios/${id}`}>
+            Volver
+          </BotonEnlace>
           <BotonImprimir />
         </div>
       </div>

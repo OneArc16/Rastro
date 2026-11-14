@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { listarFuncionarios } from "@/db/consultas";
-import { Button } from "@/components/ui/button";
+import { BotonEnlace } from "@/components/boton-enlace";
 import {
   Card,
   CardContent,
@@ -19,7 +19,7 @@ export default function PaginaFuncionarios() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Funcionarios</h1>
-        <Button render={<Link href="/funcionarios/nuevo">Nuevo funcionario</Link>} />
+        <BotonEnlace href="/funcionarios/nuevo">Nuevo funcionario</BotonEnlace>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -34,13 +34,13 @@ export default function PaginaFuncionarios() {
                   {funcionario.nombre}
                 </Link>
               </CardTitle>
-              <Button
+              <BotonEnlace
                 variant="outline"
                 size="sm"
-                render={
-                  <Link href={`/funcionarios/${funcionario.id}/editar`}>Editar</Link>
-                }
-              />
+                href={`/funcionarios/${funcionario.id}/editar`}
+              >
+                Editar
+              </BotonEnlace>
             </CardHeader>
             <CardContent className="space-y-1 text-sm text-muted-foreground">
               <p>{funcionario.cargo ?? "Sin cargo registrado"}</p>

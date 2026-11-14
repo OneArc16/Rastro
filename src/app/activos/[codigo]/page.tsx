@@ -9,7 +9,7 @@ import {
 import { AccionesActivo } from "@/components/activos/acciones-activo";
 import { DetalleSpecs } from "@/components/activos/detalle-specs";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { BotonEnlace } from "@/components/boton-enlace";
 import {
   Card,
   CardContent,
@@ -58,10 +58,9 @@ export default async function PaginaFichaActivo({
           </Badge>
         </div>
         {activo.estado !== "dado_de_baja" && (
-          <Button
-            variant="outline"
-            render={<Link href={`/activos/${activo.codigo}/editar`}>Editar</Link>}
-          />
+          <BotonEnlace variant="outline" href={`/activos/${activo.codigo}/editar`}>
+            Editar
+          </BotonEnlace>
         )}
       </div>
 

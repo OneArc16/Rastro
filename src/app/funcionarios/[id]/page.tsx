@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { obtenerFichaFuncionario } from "@/db/consultas";
 import { DialogoRetiro } from "@/components/funcionarios/dialogo-retiro";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { BotonEnlace } from "@/components/boton-enlace";
 import {
   Card,
   CardContent,
@@ -40,17 +40,12 @@ export default async function PaginaFichaFuncionario({
         </div>
         {!funcionario.retirado && (
           <div className="flex flex-wrap gap-2">
-            <Button
-              render={
-                <Link href={`/funcionarios/${funcionario.id}/hoja-de-vida`}>
-                  Hoja de vida
-                </Link>
-              }
-            />
-            <Button
-              variant="outline"
-              render={<Link href={`/funcionarios/${funcionario.id}/editar`}>Editar</Link>}
-            />
+            <BotonEnlace href={`/funcionarios/${funcionario.id}/hoja-de-vida`}>
+              Hoja de vida
+            </BotonEnlace>
+            <BotonEnlace variant="outline" href={`/funcionarios/${funcionario.id}/editar`}>
+              Editar
+            </BotonEnlace>
             <DialogoRetiro
               funcionario={{ id: funcionario.id, nombre: funcionario.nombre }}
               equiposVigentes={vigentes.length}

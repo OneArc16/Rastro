@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { obtenerFichaActivo, propuestasDeCodigo } from "@/db/consultas";
 import { FormularioActivo } from "@/components/activos/formulario-activo";
-import { Button } from "@/components/ui/button";
+import { BotonEnlace } from "@/components/boton-enlace";
 
 export const metadata: Metadata = { title: "Editar activo" };
 export const dynamic = "force-dynamic";
@@ -24,10 +23,9 @@ export default async function PaginaEditarActivo({
         <p className="text-sm text-muted-foreground">
           Un activo dado de baja no se edita, para conservar el historial.
         </p>
-        <Button
-          variant="outline"
-          render={<Link href={`/activos/${ficha.activo.codigo}`}>Volver a la ficha</Link>}
-        />
+        <BotonEnlace variant="outline" href={`/activos/${ficha.activo.codigo}`}>
+          Volver a la ficha
+        </BotonEnlace>
       </div>
     );
   }
