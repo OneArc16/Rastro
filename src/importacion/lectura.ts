@@ -233,7 +233,8 @@ export function leerHoja({ nombre, celdas }: HojaCruda): FichaExcel {
     tipo: dato(c("D36")),
     serial: dato(c("F36")),
   };
-  const hayMonitor = monitor.marca !== null || monitor.modelo !== null || monitor.serial !== null;
+  // Varias hojas describen el monitor (tamaño, color, tipo) sin anotar marca ni modelo
+  const hayMonitor = Object.values(monitor).some((valor) => valor !== null);
 
   // Observaciones: texto de la columna A hasta la primera "ULTIMA FECHA"
   const filasNovedad: number[] = [];

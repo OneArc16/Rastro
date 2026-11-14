@@ -106,12 +106,22 @@ describe("leerHoja — periféricos, monitor e impresora", () => {
     ]);
   });
 
-  it("lee el monitor y lo omite si la marca dice NO o está vacía", () => {
+  it("lee el monitor y lo omite si todas sus celdas están vacías o dicen NO", () => {
     expect(leerHoja(hoja()).monitor).toEqual({
       marca: "LG", modelo: "24MR400-B", tamano: '24"', color: "NEGRO", tipo: "FHD", serial: "412TOQN1Q772",
     });
-    expect(leerHoja(hoja({ B35: "NO", D35: "NO", F36: "NO" })).monitor).toBeNull();
-    expect(leerHoja(hoja({ B35: undefined, D35: undefined, F36: undefined })).monitor).toBeNull();
+    const sinMonitor = { B35: "NO", D35: "NO", F35: "NO", B36: "NO", D36: "NO", F36: "NO" };
+    expect(leerHoja(hoja(sinMonitor)).monitor).toBeNull();
+    const vacio = { B35: undefined, D35: undefined, F35: undefined, B36: undefined, D36: undefined, F36: undefined };
+    expect(leerHoja(hoja(vacio)).monitor).toBeNull();
+  });
+
+  it("importa el monitor aunque falten marca, modelo y serial si tiene otros datos", () => {
+    const soloDescripcion = { B35: undefined, D35: undefined, F36: undefined, F35: '20"', B36: "NEGRO", D36: "LED" };
+    expect(leerHoja(hoja(soloDescripcion)).monitor).toEqual({
+      marca: null, modelo: null, tamano: '20"', color: "NEGRO", tipo: "LED", serial: null,
+    });
+    expect(leerHoja(hoja({ B35: undefined, D35: "20MK400", F36: undefined })).monitor?.modelo).toBe("20MK400");
   });
 
   it("lee la impresora solo si APLICA es SI", () => {
