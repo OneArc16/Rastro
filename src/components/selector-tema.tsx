@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { ThemeToggler, type ThemeSelection } from "@animate-ui/react/primitives/effects/theme-toggler";
+import { normalizarTema } from "@/lib/tema";
 import { cn } from "@/lib/utils";
 
 const SIGUIENTE: Record<ThemeSelection, ThemeSelection> = {
@@ -29,7 +30,7 @@ export function SelectorTema({ className }: { className?: string }) {
 
   if (!montado) return <span className={cn("inline-block size-9", className)} aria-hidden />;
 
-  const actual = (theme ?? "system") as ThemeSelection;
+  const actual = normalizarTema(theme);
   const resuelto = resolvedTheme === "dark" ? "dark" : "light";
 
   return (
