@@ -17,6 +17,8 @@ type Props = {
   placeholder?: string;
   tamano?: "sm" | "default";
   id?: string;
+  /** Nombre del campo cuando el selector va dentro de un formulario. */
+  nombre?: string;
   className?: string;
 };
 
@@ -32,6 +34,7 @@ export function Selector({
   placeholder,
   tamano = "default",
   id,
+  nombre,
   className = "w-full",
 }: Props) {
   const items = opciones.map((opcion) => ({
@@ -42,6 +45,7 @@ export function Selector({
   return (
     <Select
       items={items}
+      name={nombre}
       value={valor}
       onValueChange={(nuevo) => alCambiar((nuevo as string | null) ?? "")}
     >

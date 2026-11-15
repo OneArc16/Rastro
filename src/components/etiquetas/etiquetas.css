@@ -1,0 +1,94 @@
+/*
+ * Hoja de etiquetas QR en tamaño carta. Clases con prefijo et-: los módulos
+ * CSS no funcionan en este proyecto (la regla "*.css" de Turbopack en
+ * next.config.ts les quita el mapeo de clases).
+ */
+
+.et-contenedor {
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+/* El relleno replica los márgenes de @page en src/app/globals.css */
+.et-hoja {
+  box-sizing: border-box;
+  width: 8.5in;
+  margin: 0 auto;
+  padding: 0.55in 0.7in;
+  background: #ffffff;
+  color: #000000;
+  font-family: Arial, Helvetica, sans-serif;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.2);
+}
+
+.et-rejilla {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.08in;
+}
+
+.et-etiqueta {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.08in;
+  height: 1.25in;
+  padding: 0.08in;
+  /* Guía de corte */
+  border: 0.75pt dashed #9a9a9a;
+  break-inside: avoid;
+  overflow: hidden;
+}
+
+.et-qr {
+  flex: none;
+  width: 1.05in;
+  height: 1.05in;
+}
+
+.et-qr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.et-texto {
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.et-codigo {
+  margin: 0;
+  font-size: 14pt;
+  font-weight: 700;
+  letter-spacing: 0.3pt;
+  white-space: nowrap;
+}
+
+.et-tipo {
+  margin: 2pt 0 0;
+  font-size: 8pt;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.et-detalle {
+  margin: 1pt 0 0;
+  font-size: 7pt;
+  overflow-wrap: anywhere;
+}
+
+@media print {
+  .et-contenedor {
+    overflow: visible;
+    padding: 0;
+  }
+
+  /* En papel, los márgenes los pone @page en cada página */
+  .et-hoja {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+}

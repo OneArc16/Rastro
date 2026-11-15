@@ -8,6 +8,7 @@ import {
 } from "@/db/consultas";
 import { AccionesActivo } from "@/components/activos/acciones-activo";
 import { DetalleSpecs } from "@/components/activos/detalle-specs";
+import { EtiquetaQr } from "@/components/etiquetas/etiqueta-qr";
 import { Badge } from "@/components/ui/badge";
 import { BotonEnlace } from "@/components/boton-enlace";
 import {
@@ -23,6 +24,7 @@ import {
 } from "@/lib/etiquetas";
 import { formatearFecha } from "@/lib/fechas";
 import { formatearPesos } from "@/lib/moneda";
+import { obtenerUrlBase } from "@/lib/url-base-servidor";
 
 export const metadata: Metadata = { title: "Ficha de activo" };
 export const dynamic = "force-dynamic";
@@ -44,6 +46,7 @@ export default async function PaginaFichaActivo({
   if (!ficha) notFound();
 
   const { activo, historial, mantenimientos, asignacionVigente } = ficha;
+  const { base } = await obtenerUrlBase();
 
   return (
     <div className="space-y-6">
@@ -209,6 +212,28 @@ export default async function PaginaFichaActivo({
             )}
           </CardContent>
         </Card>
+
+        {activo.estado !== "dado_de_baja" && (
+          <Card>
+            <CardHeader className="flex items-center justify-between">
+              <CardTitle>Etiqueta QR</CardTitle>
+              <BotonEnlace variant="outline" size="sm" href={`/etiquetas?codigo=${encodeURIComponent(activo.codigo)}`}>
+                Imprimir etiqueta
+              </BotonEnlace>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <div className="w-[2.4in]">
+                <EtiquetaQr
+                  base={base}
+                  codigo={activo.codigo}
+                  tipo={activo.tipo}
+                  marca={activo.marca}
+                  modelo={activo.modelo}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { obtenerDatosHojaDeVida } from "@/db/consultas";
 import { construirHojaDeVida } from "@/dominio/hoja-de-vida";
-import { BotonImprimir } from "@/components/hoja-de-vida/boton-imprimir";
+import { BotonImprimir } from "@/components/boton-imprimir";
 import { HojaDeVidaFormato } from "@/components/hoja-de-vida/hoja-de-vida-formato";
 import { BotonEnlace } from "@/components/boton-enlace";
 

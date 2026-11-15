@@ -11,6 +11,7 @@ import {
   Wrench,
   Settings,
   Menu,
+  QrCode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ const ENLACES = [
   { href: "/funcionarios", etiqueta: "Funcionarios", icono: Users },
   { href: "/ubicaciones", etiqueta: "Ubicaciones", icono: MapPin },
   { href: "/mantenimientos", etiqueta: "Mantenimientos", icono: Wrench },
+  { href: "/etiquetas", etiqueta: "Etiquetas QR", icono: QrCode },
   { href: "/configuracion", etiqueta: "Configuración", icono: Settings },
 ] as const;
 
