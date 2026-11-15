@@ -1,5 +1,5 @@
 import { ETIQUETAS_TIPO } from "@/lib/etiquetas";
-import type { PlanImportacion } from "./plan";
+import { codigosRepetidos, type PlanImportacion } from "./plan";
 
 /** Texto de la vista previa: qué se va a crear y todo lo que conviene revisar. */
 export function formatearInforme(plan: PlanImportacion, activosActuales: number): string {
@@ -23,6 +23,14 @@ export function formatearInforme(plan: PlanImportacion, activosActuales: number)
     `  Asignados: ${asignados} · sin asignar: ${plan.activos.length - asignados}`,
     `Mantenimientos: ${plan.mantenimientos.length}`,
   ];
+
+  const repetidos = codigosRepetidos(plan);
+  if (repetidos.length > 0) {
+    lineas.push(
+      "",
+      `ERROR: hay códigos repetidos en el Excel (${repetidos.join(", ")}). No se puede importar hasta corregir las hojas.`,
+    );
+  }
 
   if (activosActuales > 0) {
     lineas.push(

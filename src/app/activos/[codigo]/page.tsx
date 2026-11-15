@@ -46,7 +46,7 @@ export default async function PaginaFichaActivo({
   if (!ficha) notFound();
 
   const { activo, historial, mantenimientos, asignacionVigente } = ficha;
-  const { base } = await obtenerUrlBase();
+  const { base, configurada } = await obtenerUrlBase();
 
   return (
     <div className="space-y-6">
@@ -221,7 +221,13 @@ export default async function PaginaFichaActivo({
                 Imprimir etiqueta
               </BotonEnlace>
             </CardHeader>
-            <CardContent className="overflow-x-auto">
+            <CardContent className="space-y-3 overflow-x-auto">
+              {!configurada && (
+                <p className="text-sm text-destructive">
+                  Falta configurar <span className="font-mono">APP_BASE_URL</span>: este QR usa la
+                  dirección con que abriste la página y puede no funcionar desde el celular.
+                </p>
+              )}
               <div className="w-[2.4in]">
                 <EtiquetaQr
                   base={base}

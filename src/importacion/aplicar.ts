@@ -17,7 +17,7 @@ import {
   ubicaciones,
 } from "@/db/schema";
 import { ErrorDeNegocio, MOTIVO_CARGA_INICIAL } from "@/dominio/comunes";
-import type { PlanImportacion } from "./plan";
+import { codigosRepetidos, type PlanImportacion } from "./plan";
 
 /** "AAAA-MM-DD" → Date a la medianoche local, para que se muestre como ese mismo día. */
 function fechaLocal(iso: string): Date {
@@ -40,6 +40,13 @@ export function aplicarPlan(
   plan: PlanImportacion,
   opciones: { reemplazar: boolean },
 ): ResultadoAplicacion {
+  const repetidos = codigosRepetidos(plan);
+  if (repetidos.length > 0) {
+    throw new ErrorDeNegocio(
+      `Hay códigos repetidos en el Excel: ${repetidos.join(", ")}. Corregí las hojas antes de importar.`,
+    );
+  }
+
   return db.transaction((tx) => {
     const existentes = tx.select({ total: count() }).from(activos).get()?.total ?? 0;
     if (existentes > 0 && !opciones.reemplazar) {

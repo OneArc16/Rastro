@@ -62,7 +62,11 @@ export async function leerLibro(
   ruta: string,
 ): Promise<{ hojas: HojaCruda[]; resumenDispensario: FilaResumenDispensario[] }> {
   const libro = new ExcelJS.Workbook();
-  await libro.xlsx.readFile(ruta);
+  try {
+    await libro.xlsx.readFile(ruta);
+  } catch {
+    throw new Error(`El archivo no es un Excel (.xlsx) válido: ${ruta}`);
+  }
 
   // Una hoja de PC se reconoce por la etiqueta "PC" en A6; los resúmenes no la tienen
   const hojas = libro.worksheets

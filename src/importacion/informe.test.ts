@@ -34,4 +34,12 @@ describe("formatearInforme", () => {
     );
     expect(formatearInforme(PLAN, 0)).not.toContain("--reemplazar");
   });
+
+  it("muestra como error los códigos repetidos, que impiden importar", () => {
+    const repetido = { ...PLAN, activos: [...PLAN.activos, { ...PLAN.activos[0], hoja: "02" }] };
+    expect(formatearInforme(repetido, 0)).toContain(
+      "ERROR: hay códigos repetidos en el Excel (PC-001). No se puede importar hasta corregir las hojas.",
+    );
+    expect(formatearInforme(PLAN, 0)).not.toContain("ERROR");
+  });
 });

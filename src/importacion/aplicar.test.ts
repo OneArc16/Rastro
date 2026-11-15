@@ -112,9 +112,23 @@ describe("aplicarPlan", () => {
     expect(db.select().from(configuracion).get()?.elaboradoNombre).toBe("Daniel");
   });
 
+  it("rechaza un plan con códigos repetidos antes de tocar la base", () => {
+    db.insert(activos).values({ codigo: "PC-999", tipo: "pc_mesa" }).run();
+    const planRepetido: PlanImportacion = { ...PLAN, activos: [...PLAN.activos, activo("PC-001", null)] };
+
+    expect(() => aplicarPlan(db, planRepetido, { reemplazar: true })).toThrow(
+      new ErrorDeNegocio("Hay códigos repetidos en el Excel: PC-001. Corregí las hojas antes de importar."),
+    );
+    expect(contar()).toEqual({ ubicaciones: 0, funcionarios: 0, activos: 1, asignaciones: 0, mantenimientos: 0 });
+  });
+
   it("si algo falla a mitad de camino no queda nada a medias, ni se borran los datos anteriores", () => {
     db.insert(activos).values({ codigo: "PC-999", tipo: "pc_mesa" }).run();
-    const planRoto: PlanImportacion = { ...PLAN, activos: [...PLAN.activos, activo("PC-001", null)] };
+    // Un destino que no está en el plan deja la asignación sin funcionario ni ubicación: la base la rechaza
+    const planRoto: PlanImportacion = {
+      ...PLAN,
+      activos: [...PLAN.activos, activo("PC-050", { tipo: "ubicacion", nombre: "NO EXISTE" })],
+    };
 
     expect(() => aplicarPlan(db, planRoto, { reemplazar: true })).toThrow();
     expect(contar()).toEqual({ ubicaciones: 0, funcionarios: 0, activos: 1, asignaciones: 0, mantenimientos: 0 });

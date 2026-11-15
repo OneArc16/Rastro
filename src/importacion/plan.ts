@@ -219,6 +219,17 @@ function specsDePc(ficha: FichaExcel, tipo: TipoActivo): SpecsPC | null {
   });
 }
 
+/** Códigos que aparecen más de una vez (p. ej. hojas "2" y "02"). Si hay alguno, no se puede importar. */
+export function codigosRepetidos(plan: Pick<PlanImportacion, "activos">): string[] {
+  const vistos = new Set<string>();
+  const repetidos = new Set<string>();
+  for (const { codigo } of plan.activos) {
+    if (vistos.has(codigo)) repetidos.add(codigo);
+    vistos.add(codigo);
+  }
+  return [...repetidos];
+}
+
 // ---------------------------------------------------------------------------
 
 export function construirPlan(

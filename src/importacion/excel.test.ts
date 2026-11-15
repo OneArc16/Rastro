@@ -60,4 +60,12 @@ describe("leerLibro", () => {
       { numero: 6, municipio: "REMOLINO", area: "LINEA DE FRENTE" },
     ]);
   });
+
+  it("explica con un mensaje claro cuando el archivo no es un Excel válido", async () => {
+    const falso = path.join(carpeta, "falso.xlsx");
+    fs.writeFileSync(falso, "esto no es un excel");
+    await expect(leerLibro(falso)).rejects.toThrow(
+      "El archivo no es un Excel (.xlsx) válido: " + falso,
+    );
+  });
 });

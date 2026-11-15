@@ -18,7 +18,7 @@ import { aplicarPlan } from "../src/importacion/aplicar";
 import { leerLibro } from "../src/importacion/excel";
 import { formatearInforme } from "../src/importacion/informe";
 import { leerHoja } from "../src/importacion/lectura";
-import { construirPlan } from "../src/importacion/plan";
+import { codigosRepetidos, construirPlan } from "../src/importacion/plan";
 import { hoyIso } from "../src/lib/fechas";
 
 const USO = 'Uso: pnpm importar "<archivo.xlsx>" [--confirmar] [--reemplazar]';
@@ -43,7 +43,9 @@ async function main() {
   const confirmar = banderas.has("--confirmar");
   const reemplazar = banderas.has("--reemplazar");
 
-  const { hojas, resumenDispensario } = await leerLibro(archivo);
+  const { hojas, resumenDispensario } = await leerLibro(archivo).catch((error: Error) =>
+    salir(error.message),
+  );
   if (hojas.length === 0) salir("El archivo no tiene hojas con el formato de hoja de vida.");
 
   const plan = construirPlan(hojas.map(leerHoja), resumenDispensario, hoyIso());
@@ -51,6 +53,10 @@ async function main() {
 
   console.log(`Hojas de PC leídas: ${hojas.length}\n`);
   console.log(formatearInforme(plan, activosActuales));
+
+  if (codigosRepetidos(plan).length > 0) {
+    salir("\nNo se escribió nada: corregí los códigos repetidos en el Excel y volvé a intentar.");
+  }
 
   if (!confirmar) {
     console.log(

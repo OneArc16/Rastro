@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FichaExcel } from "./lectura";
-import { construirPlan, type FilaResumenDispensario } from "./plan";
+import { codigosRepetidos, construirPlan, type FilaResumenDispensario } from "./plan";
 
 const HOY = "2026-11-14";
 
@@ -56,6 +56,17 @@ describe("construirPlan — códigos", () => {
   it("ordena IPS y dispensarios por número, sin importar el orden de las hojas", () => {
     const plan = construirPlan([ficha("02 DISP"), ficha("10"), ficha("2")], [], HOY);
     expect(plan.activos.map((a) => a.codigo)).toEqual(["PC-002", "PC-010", "PC-102"]);
+  });
+});
+
+describe("codigosRepetidos", () => {
+  it("detecta dos hojas que dan el mismo código", () => {
+    const plan = construirPlan([ficha("2"), ficha("02"), ficha("3")], [], HOY);
+    expect(codigosRepetidos(plan)).toEqual(["PC-002"]);
+  });
+
+  it("no informa nada cuando todos los códigos son distintos", () => {
+    expect(codigosRepetidos(construirPlan([ficha("2"), ficha("3")], [], HOY))).toEqual([]);
   });
 });
 
