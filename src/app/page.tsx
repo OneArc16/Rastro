@@ -6,6 +6,7 @@ import {
   resumenInicio,
 } from "@/db/consultas";
 import { DIAS_AVISO_GARANTIA, DIAS_AVISO_MANTENIMIENTO } from "@/dominio/mantenimientos";
+import { Indicador } from "@/components/inicio/indicador";
 import { ListaPendientes } from "@/components/mantenimientos/lista-pendientes";
 import {
   Card,
@@ -17,21 +18,6 @@ import { ETIQUETAS_ESTADO, ETIQUETAS_TIPO } from "@/lib/etiquetas";
 import { formatearFecha, hoyIso } from "@/lib/fechas";
 
 export const dynamic = "force-dynamic";
-
-function Tarjeta({ titulo, valor, alerta = false }: { titulo: string; valor: number; alerta?: boolean }) {
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{titulo}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className={`text-3xl font-bold ${alerta && valor > 0 ? "text-destructive" : ""}`}>
-          {valor}
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function Bloque({
   titulo,
@@ -81,10 +67,22 @@ export default function PaginaInicio() {
       <h1 className="text-2xl font-bold tracking-tight">Inicio</h1>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Tarjeta titulo="Activos registrados" valor={resumen.totalActivos} />
-        <Tarjeta titulo="Disponibles" valor={resumen.disponibles.length} />
-        <Tarjeta titulo="Mantenimientos vencidos" valor={vencidos.length} alerta />
-        <Tarjeta titulo="Garantías por vencer" valor={garantias.length} alerta />
+        <Indicador orden={0} titulo="Activos registrados" valor={resumen.totalActivos} icono="activos" tono="marca" />
+        <Indicador orden={1} titulo="Disponibles" valor={resumen.disponibles.length} icono="disponibles" tono="exito" />
+        <Indicador
+          orden={2}
+          titulo="Mantenimientos vencidos"
+          valor={vencidos.length}
+          icono="vencidos"
+          tono={vencidos.length > 0 ? "alerta" : "neutro"}
+        />
+        <Indicador
+          orden={3}
+          titulo="Garantías por vencer"
+          valor={garantias.length}
+          icono="garantias"
+          tono={garantias.length > 0 ? "aviso" : "neutro"}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

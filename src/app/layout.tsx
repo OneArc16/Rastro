@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { BarraLateral, BarraMovil } from "@/components/navegacion";
+import { Proveedores } from "@/components/proveedores";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,15 +25,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
+    // suppressHydrationWarning: next-themes agrega la clase del tema a <html> en el cliente
+    <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <body className="antialiased">
-        <div className="flex min-h-dvh flex-col md:flex-row">
-          <BarraLateral />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <BarraMovil />
-            <main className="flex-1 p-4 md:p-8 print:p-0">{children}</main>
+        <Proveedores>
+          <div className="flex min-h-dvh flex-col md:flex-row">
+            <BarraLateral />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <BarraMovil />
+              <main className="mx-auto w-full max-w-7xl flex-1 p-4 md:p-8 print:max-w-none print:p-0">
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
+        </Proveedores>
       </body>
     </html>
   );

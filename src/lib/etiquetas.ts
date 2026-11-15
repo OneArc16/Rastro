@@ -27,3 +27,10 @@ export const ETIQUETAS_MANTENIMIENTO: Record<TipoMantenimiento, string> = {
   preventivo: "Preventivo",
   correctivo: "Correctivo",
 };
+
+/** Color de la etiqueta de estado: verde operativo, ámbar en reparación, rojo dado de baja. */
+export const VARIANTE_ESTADO: Record<EstadoActivo, "success" | "warning" | "destructive"> = {
+  operativo: "success",
+  en_reparacion: "warning",
+  dado_de_baja: "destructive",
+};

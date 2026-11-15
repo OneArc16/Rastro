@@ -14,7 +14,7 @@ import {
   useTable,
 } from "@tanstack/react-table";
 import type { FilaInventario } from "@/db/consultas";
-import { ETIQUETAS_ESTADO, ETIQUETAS_TIPO } from "@/lib/etiquetas";
+import { ETIQUETAS_ESTADO, ETIQUETAS_TIPO, VARIANTE_ESTADO } from "@/lib/etiquetas";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,7 +68,7 @@ const columnas = columna.columns([
     header: "Estado",
     filterFn: "equalsString",
     cell: (info) => (
-      <Badge variant={info.getValue() === "operativo" ? "default" : "outline"}>
+      <Badge variant={VARIANTE_ESTADO[info.getValue()]}>
         {ETIQUETAS_ESTADO[info.getValue()]}
       </Badge>
     ),
@@ -92,9 +92,9 @@ const columnas = columna.columns([
     filterFn: "equalsString",
     cell: (info) =>
       info.getValue() === "disponible" ? (
-        <Badge variant="secondary">Disponible</Badge>
+        <Badge variant="success">Disponible</Badge>
       ) : (
-        <Badge variant="outline">Asignado</Badge>
+        <Badge variant="secondary">Asignado</Badge>
       ),
   }),
 ]);

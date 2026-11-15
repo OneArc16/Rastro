@@ -21,6 +21,7 @@ import {
   ETIQUETAS_ESTADO,
   ETIQUETAS_MANTENIMIENTO,
   ETIQUETAS_TIPO,
+  VARIANTE_ESTADO,
 } from "@/lib/etiquetas";
 import { formatearFecha } from "@/lib/fechas";
 import { formatearPesos } from "@/lib/moneda";
@@ -56,7 +57,7 @@ export default async function PaginaFichaActivo({
             {activo.codigo}
           </h1>
           <Badge variant="secondary">{ETIQUETAS_TIPO[activo.tipo]}</Badge>
-          <Badge variant={activo.estado === "operativo" ? "default" : "outline"}>
+          <Badge variant={VARIANTE_ESTADO[activo.estado]}>
             {ETIQUETAS_ESTADO[activo.estado]}
           </Badge>
         </div>

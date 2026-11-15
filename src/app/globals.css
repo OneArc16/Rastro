@@ -27,6 +27,10 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -48,73 +52,85 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Paleta tomada del logo de SISM (public/logo.png): azul #10509A = oklch(0.437 0.136 255.8)
+ * como color principal y rojo #C02030 = oklch(0.523 0.193 22.9) para alertas y acciones destructivas.
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.975 0.006 250);
+  --foreground: oklch(0.22 0.03 262);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.22 0.03 262);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --popover-foreground: oklch(0.22 0.03 262);
+  --primary: oklch(0.437 0.136 255.8);
+  --primary-foreground: oklch(0.985 0.005 250);
+  --secondary: oklch(0.945 0.02 252);
+  --secondary-foreground: oklch(0.32 0.08 258);
+  --muted: oklch(0.955 0.01 252);
+  --muted-foreground: oklch(0.5 0.03 258);
+  --accent: oklch(0.935 0.035 252);
+  --accent-foreground: oklch(0.34 0.1 258);
+  --destructive: oklch(0.523 0.193 22.9);
+  --success: oklch(0.56 0.13 155);
+  --success-foreground: oklch(0.985 0.01 155);
+  --warning: oklch(0.72 0.15 70);
+  --warning-foreground: oklch(0.25 0.05 60);
+  --border: oklch(0.91 0.014 252);
+  --input: oklch(0.88 0.018 252);
+  --ring: oklch(0.55 0.13 255.8);
+  --chart-1: oklch(0.437 0.136 255.8);
+  --chart-2: oklch(0.6 0.12 235);
+  --chart-3: oklch(0.56 0.13 155);
+  --chart-4: oklch(0.72 0.15 70);
+  --chart-5: oklch(0.523 0.193 22.9);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.27 0.075 258);
+  --sidebar-foreground: oklch(0.86 0.025 252);
+  --sidebar-primary: oklch(0.985 0.005 250);
+  --sidebar-primary-foreground: oklch(0.3 0.09 258);
+  --sidebar-accent: oklch(0.34 0.08 258);
+  --sidebar-accent-foreground: oklch(0.985 0.005 250);
+  --sidebar-border: oklch(0.34 0.06 258);
+  --sidebar-ring: oklch(0.62 0.13 255);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: oklch(0.17 0.025 262);
+  --foreground: oklch(0.95 0.01 252);
+  --card: oklch(0.21 0.03 262);
+  --card-foreground: oklch(0.95 0.01 252);
+  --popover: oklch(0.23 0.032 262);
+  --popover-foreground: oklch(0.95 0.01 252);
+  --primary: oklch(0.68 0.13 252);
+  --primary-foreground: oklch(0.17 0.03 262);
+  --secondary: oklch(0.27 0.035 262);
+  --secondary-foreground: oklch(0.92 0.015 252);
+  --muted: oklch(0.26 0.03 262);
+  --muted-foreground: oklch(0.72 0.03 255);
+  --accent: oklch(0.3 0.05 258);
+  --accent-foreground: oklch(0.95 0.01 252);
+  --destructive: oklch(0.66 0.19 22.9);
+  --success: oklch(0.7 0.14 155);
+  --success-foreground: oklch(0.17 0.03 155);
+  --warning: oklch(0.8 0.14 75);
+  --warning-foreground: oklch(0.2 0.04 60);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.68 0.13 252);
+  --chart-1: oklch(0.68 0.13 252);
+  --chart-2: oklch(0.72 0.11 225);
+  --chart-3: oklch(0.7 0.14 155);
+  --chart-4: oklch(0.8 0.14 75);
+  --chart-5: oklch(0.66 0.19 22.9);
+  --sidebar: oklch(0.14 0.025 262);
+  --sidebar-foreground: oklch(0.8 0.025 252);
+  --sidebar-primary: oklch(0.68 0.13 252);
+  --sidebar-primary-foreground: oklch(0.15 0.03 262);
+  --sidebar-accent: oklch(0.22 0.035 262);
+  --sidebar-accent-foreground: oklch(0.96 0.01 252);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.68 0.13 252);
 }
 
 @layer base {
@@ -136,9 +152,26 @@
 }
 
 @media print {
+  /*
+   * En papel siempre tema claro. next-themes pone color-scheme: dark como estilo en línea en <html>
+   * y Chrome pinta los márgenes del papel según ese esquema: solo !important le gana a un estilo en línea.
+   */
+  html {
+    color-scheme: light !important;
+    background: #ffffff;
+  }
+
   body {
     background: #ffffff;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  /* Lo impreso nunca debe quedar a mitad de una animación de entrada */
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }
