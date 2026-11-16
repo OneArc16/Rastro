@@ -3,7 +3,7 @@
  * Un acta guarda la copia fija de lo que se imprime; se puede editar, y cada
  * edición conserva la versión anterior para que el historial sea confiable.
  */
-import { eq, inArray, max } from "drizzle-orm";
+import { and, eq, inArray, max } from "drizzle-orm";
 import type { Db } from "@/db";
 import {
   actas,
@@ -328,6 +328,14 @@ export function crearActaDeEgreso(
     throw new ErrorDeNegocio("Elija la ubicación de destino para trasladar los equipos");
   }
   return db.transaction((tx) => {
+    // Un equipo dado de baja no sale a ningún lado, se traslade o no
+    const deBaja = tx
+      .select({ codigo: activos.codigo })
+      .from(activos)
+      .where(and(inArray(activos.id, datos.activoIds), eq(activos.estado, "dado_de_baja")))
+      .get();
+    if (deBaja) throw new ErrorDeNegocio(`El activo ${deBaja.codigo} está dado de baja`);
+
     const acta = crearActaEn(tx, { ...datos, tipo: "egreso" });
     if (datos.trasladar) {
       for (const activoId of new Set(datos.activoIds)) {

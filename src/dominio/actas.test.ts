@@ -413,6 +413,19 @@ describe("acta de egreso", () => {
     expect(anterior?.fechaHasta).toBe("2026-11-16");
   });
 
+  it("no incluye equipos dados de baja aunque no se trasladen", () => {
+    darDeBaja(db, { activoId: monitor, fecha: "2026-10-01" });
+    expect(() =>
+      crearActaDeEgreso(db, {
+        fecha: "2026-11-16",
+        activoIds: [monitor],
+        trasladar: false,
+        datos: datosEgreso(),
+      }),
+    ).toThrow(new ErrorDeNegocio("El activo MON-001 está dado de baja"));
+    expect(db.select().from(actas).all()).toHaveLength(0);
+  });
+
   it("con traslado deja igual un equipo que ya está en el destino", () => {
     asignar(db, { activoId: pc, destino: { ubicacionId: dispensario }, fecha: "2026-01-01" });
     crearActaDeEgreso(db, {

@@ -45,6 +45,9 @@ async function leerEnvio(formulario: FormData) {
     if (archivo.size > MAXIMO_BYTES_FOTO) return { ok: false, error: "La foto es demasiado grande" } as const;
     foto = { contenido: Buffer.from(await archivo.arrayBuffer()), tipo: archivo.type };
   }
+  if (foto && envio.data.acta.tipo !== "baja") {
+    return { ok: false, error: "Solo el acta de baja lleva foto" } as const;
+  }
   return { ok: true, envio: envio.data, foto } as const;
 }
 
