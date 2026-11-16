@@ -172,8 +172,11 @@ export const ESQUEMA_DATOS_POR_TIPO = {
 // ---------------------------------------------------------------------------
 
 export const TIPOS_FOTO = ["image/jpeg", "image/png", "image/webp"] as const;
-/** Tope de la foto ya reducida (≈1600 px en JPEG pesa bastante menos). */
-export const MAXIMO_BYTES_FOTO = 2 * 1024 * 1024;
+/**
+ * Tope de la foto ya reducida en el navegador (≈1600 px en JPEG suele pesar
+ * 200–500 KB). Queda por debajo del límite de 1 MB de las server actions.
+ */
+export const MAXIMO_BYTES_FOTO = 800 * 1024;
 
 // ---------------------------------------------------------------------------
 // Datos comunes de crear y editar
@@ -196,6 +199,15 @@ export const esquemaActa = z.discriminatedUnion("tipo", [
 ]);
 
 export type EntradaActa = z.output<typeof esquemaActa>;
+
+/** Lo que envía el formulario de un acta (la foto viaja aparte en el FormData). */
+export const esquemaEnvioActa = z.object({
+  acta: esquemaActa,
+  /** Solo egreso al crear: dejar los equipos en la ubicación de destino. */
+  trasladar: z.boolean().default(false),
+  /** Solo al editar: quitar la foto guardada. */
+  quitarFoto: z.boolean().default(false),
+});
 
 export { TIPOS_ACTA };
 

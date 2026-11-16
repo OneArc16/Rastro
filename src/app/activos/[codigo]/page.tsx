@@ -6,7 +6,9 @@ import {
   listarDestinos,
   obtenerFichaActivo,
 } from "@/db/consultas";
+import { buscarActas } from "@/db/consultas-actas";
 import { AccionesActivo } from "@/components/activos/acciones-activo";
+import { TablaActas } from "@/components/actas/tabla-actas";
 import { DetalleSpecs } from "@/components/activos/detalle-specs";
 import { EtiquetaQr } from "@/components/etiquetas/etiqueta-qr";
 import { Badge } from "@/components/ui/badge";
@@ -61,11 +63,21 @@ export default async function PaginaFichaActivo({
             {ETIQUETAS_ESTADO[activo.estado]}
           </Badge>
         </div>
-        {activo.estado !== "dado_de_baja" && (
-          <BotonEnlace variant="outline" href={`/activos/${activo.codigo}/editar`}>
-            Editar
+        <div className="flex flex-wrap gap-2">
+          {activo.estado !== "dado_de_baja" && (
+            <>
+              <BotonEnlace variant="outline" href={`/actas/nueva?tipo=egreso&activo=${activo.id}`}>
+                Acta de egreso
+              </BotonEnlace>
+              <BotonEnlace variant="outline" href={`/activos/${activo.codigo}/editar`}>
+                Editar
+              </BotonEnlace>
+            </>
+          )}
+          <BotonEnlace variant="outline" href={`/actas/nueva?tipo=baja&activo=${activo.id}`}>
+            Acta de baja
           </BotonEnlace>
-        )}
+        </div>
       </div>
 
       <AccionesActivo
@@ -242,6 +254,11 @@ export default async function PaginaFichaActivo({
           </Card>
         )}
       </div>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Actas</h2>
+        <TablaActas actas={buscarActas({ activoId: activo.id })} vacio="Sin actas de este equipo." />
+      </section>
     </div>
   );
 }

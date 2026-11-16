@@ -500,7 +500,7 @@ describe("protecciones del historial", () => {
     expect(() => crear(Buffer.from("<script>"), "image/jpeg")).toThrow(
       new ErrorDeNegocio("El archivo no es una imagen válida"),
     );
-    const enorme = Buffer.concat([jpeg, Buffer.alloc(2 * 1024 * 1024)]);
+    const enorme = Buffer.concat([jpeg, Buffer.alloc(800 * 1024)]);
     expect(() => crear(enorme, "image/jpeg")).toThrow(
       new ErrorDeNegocio("La foto es demasiado grande"),
     );

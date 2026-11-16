@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { obtenerFichaFuncionario } from "@/db/consultas";
+import { buscarActas } from "@/db/consultas-actas";
+import { TablaActas } from "@/components/actas/tabla-actas";
 import { DialogoRetiro } from "@/components/funcionarios/dialogo-retiro";
 import { Badge } from "@/components/ui/badge";
 import { BotonEnlace } from "@/components/boton-enlace";
@@ -42,6 +44,12 @@ export default async function PaginaFichaFuncionario({
           <div className="flex flex-wrap gap-2">
             <BotonEnlace href={`/funcionarios/${funcionario.id}/hoja-de-vida`}>
               Hoja de vida
+            </BotonEnlace>
+            <BotonEnlace
+              variant="outline"
+              href={`/actas/nueva?tipo=entrega&funcionario=${funcionario.id}`}
+            >
+              Acta de entrega
             </BotonEnlace>
             <BotonEnlace variant="outline" href={`/funcionarios/${funcionario.id}/editar`}>
               Editar
@@ -125,6 +133,14 @@ export default async function PaginaFichaFuncionario({
           </CardContent>
         </Card>
       </div>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Actas</h2>
+        <TablaActas
+          actas={buscarActas({ funcionarioId: funcionario.id })}
+          vacio="Sin actas a su nombre."
+        />
+      </section>
     </div>
   );
 }

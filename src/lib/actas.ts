@@ -28,3 +28,10 @@ export function fechaImpresa(texto: string, separador: "/" | "-" = "/") {
   const { dia, mes, anio } = partesFecha(texto);
   return dia ? [dia, mes, anio].join(separador) : texto;
 }
+
+/** Nombre corto de cada tipo para listados y filtros. */
+export const TIPOS_ACTA_CORTOS: Record<TipoActa, string> = {
+  entrega: "Entrega",
+  egreso: "Egreso",
+  baja: "Baja",
+};

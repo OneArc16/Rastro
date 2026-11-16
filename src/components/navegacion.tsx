@@ -13,6 +13,7 @@ import {
   Settings,
   Menu,
   QrCode,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ const ENLACES = [
   { href: "/funcionarios", etiqueta: "Funcionarios", icono: Users },
   { href: "/ubicaciones", etiqueta: "Ubicaciones", icono: MapPin },
   { href: "/mantenimientos", etiqueta: "Mantenimientos", icono: Wrench },
+  { href: "/actas", etiqueta: "Actas", icono: FileText },
   { href: "/etiquetas", etiqueta: "Etiquetas QR", icono: QrCode },
   { href: "/configuracion", etiqueta: "Configuración", icono: Settings },
 ] as const;

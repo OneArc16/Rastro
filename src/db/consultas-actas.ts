@@ -2,10 +2,20 @@
  * Consultas de lectura de las actas. Las fotos se leen aparte, solo cuando
  * se muestran, para no cargar imágenes en listados ni fichas.
  */
-import { asc, eq } from "drizzle-orm";
-import { codigoActa } from "@/dominio/actas";
+import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
+import { codigoActa, obtenerFormatoActa } from "@/dominio/actas";
+import type { EquipoPrecarga, PersonaPrecarga } from "@/dominio/precarga-actas";
+import { buscarActasEn, type FiltrosActas } from "./busqueda-actas";
 import { db } from "./index";
-import { actas, actasActivos, actasVersiones, activos } from "./schema";
+import {
+  actas,
+  actasActivos,
+  actasVersiones,
+  activos,
+  asignaciones,
+  funcionarios,
+  ubicaciones,
+} from "./schema";
 
 /** Acta con sus equipos y sus versiones anteriores (sin fotos). */
 export function obtenerActa(id: number) {
@@ -80,4 +90,101 @@ export function obtenerFotoActa(actaId: number, versionId?: number) {
     .get();
   if (!fila || fila.actaId !== actaId || !fila.contenido || !fila.tipo) return null;
   return { contenido: fila.contenido, tipo: fila.tipo };
+}
+
+// ---------------------------------------------------------------------------
+// Historial y búsqueda (la consulta vive en busqueda-actas.ts, que se prueba)
+// ---------------------------------------------------------------------------
+
+export function buscarActas(filtros: FiltrosActas) {
+  return buscarActasEn(db, filtros);
+}
+
+// ---------------------------------------------------------------------------
+// Datos para precargar los formularios
+// ---------------------------------------------------------------------------
+
+const columnasEquipo = {
+  id: activos.id,
+  codigo: activos.codigo,
+  tipo: activos.tipo,
+  marca: activos.marca,
+  modelo: activos.modelo,
+  serial: activos.serial,
+  specs: activos.specs,
+  fechaCompra: activos.fechaCompra,
+};
+
+function persona(funcionarioId: number): (PersonaPrecarga & { id: number; retirado: boolean }) | null {
+  return (
+    db
+      .select({
+        id: funcionarios.id,
+        nombre: funcionarios.nombre,
+        cargo: funcionarios.cargo,
+        telefono: funcionarios.telefono,
+        correo: funcionarios.correo,
+        ubicacion: ubicaciones.nombre,
+        retirado: funcionarios.retirado,
+      })
+      .from(funcionarios)
+      .leftJoin(ubicaciones, eq(ubicaciones.id, funcionarios.ubicacionId))
+      .where(eq(funcionarios.id, funcionarioId))
+      .get() ?? null
+  );
+}
+
+/** Funcionario con sus equipos vigentes, para el acta de entrega. */
+export function datosNuevaEntrega(funcionarioId: number) {
+  const funcionario = persona(funcionarioId);
+  if (!funcionario) return null;
+  const equipos: EquipoPrecarga[] = db
+    .select(columnasEquipo)
+    .from(asignaciones)
+    .innerJoin(activos, eq(activos.id, asignaciones.activoId))
+    .where(and(eq(asignaciones.funcionarioId, funcionarioId), isNull(asignaciones.fechaHasta)))
+    .orderBy(asc(activos.codigo))
+    .all();
+  return { funcionario, equipos, formato: obtenerFormatoActa(db, "entrega") };
+}
+
+/** Equipo y su responsable actual (si es un funcionario), para el acta de baja. */
+export function datosNuevaBaja(activoId: number) {
+  const equipo = db
+    .select({ ...columnasEquipo, estado: activos.estado })
+    .from(activos)
+    .where(eq(activos.id, activoId))
+    .get();
+  if (!equipo) return null;
+  const vigente = db
+    .select({ funcionarioId: asignaciones.funcionarioId })
+    .from(asignaciones)
+    .where(and(eq(asignaciones.activoId, activoId), isNull(asignaciones.fechaHasta)))
+    .get();
+  const responsable = vigente?.funcionarioId ? persona(vigente.funcionarioId) : null;
+  return { equipo, responsable, formato: obtenerFormatoActa(db, "baja") };
+}
+
+/** Equipos elegidos para el acta de egreso (se ignoran los dados de baja). */
+export function datosNuevoEgreso(activoIds: number[]) {
+  const equipos: EquipoPrecarga[] =
+    activoIds.length === 0
+      ? []
+      : db
+          .select(columnasEquipo)
+          .from(activos)
+          .where(and(inArray(activos.id, activoIds), ne(activos.estado, "dado_de_baja")))
+          .orderBy(asc(activos.codigo))
+          .all();
+  return { equipos, formato: obtenerFormatoActa(db, "egreso") };
+}
+
+/** Equipos que se pueden incluir en un egreso. */
+export function listarEquiposParaEgreso() {
+  return db
+    .select({ id: activos.id, codigo: activos.codigo, tipo: activos.tipo, marca: activos.marca })
+    .from(activos)
+    .where(ne(activos.estado, "dado_de_baja"))
+    .orderBy(asc(activos.codigo))
+    .all();
 }
