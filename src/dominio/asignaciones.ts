@@ -11,7 +11,7 @@ import { ErrorDeNegocio, validarFecha } from "./comunes";
 
 export type Destino = { funcionarioId: number } | { ubicacionId: number };
 
-type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
+export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 
 // ---------------------------------------------------------------------------
 // Validaciones internas
@@ -130,31 +130,50 @@ type DatosAsignar = {
 };
 
 export function asignar(db: Db, datos: DatosAsignar) {
+  db.transaction((tx) => asignarEn(tx, datos));
+}
+
+/** Igual que asignar, dentro de una transacción ya abierta. */
+export function asignarEn(tx: Tx, datos: DatosAsignar) {
   validarFecha(datos.fecha);
-  db.transaction((tx) => {
-    const activo = obtenerActivoUtilizable(tx, datos.activoId);
-    if (obtenerVigente(tx, activo.id)) {
-      throw new ErrorDeNegocio(
-        `El activo ${activo.codigo} ya está asignado; use "Trasladar"`,
-      );
-    }
-    validarDestino(tx, datos.destino);
-    abrir(tx, activo.id, datos.destino, datos.fecha, datos.motivo);
-  });
+  const activo = obtenerActivoUtilizable(tx, datos.activoId);
+  if (obtenerVigente(tx, activo.id)) {
+    throw new ErrorDeNegocio(
+      `El activo ${activo.codigo} ya está asignado; use "Trasladar"`,
+    );
+  }
+  validarDestino(tx, datos.destino);
+  abrir(tx, activo.id, datos.destino, datos.fecha, datos.motivo);
 }
 
 export function trasladar(db: Db, datos: DatosAsignar) {
+  db.transaction((tx) => trasladarEn(tx, datos));
+}
+
+/** Igual que trasladar, dentro de una transacción ya abierta. */
+export function trasladarEn(tx: Tx, datos: DatosAsignar) {
   validarFecha(datos.fecha);
-  db.transaction((tx) => {
-    const activo = obtenerActivoUtilizable(tx, datos.activoId);
-    const vigente = exigirVigente(tx, activo.id, activo.codigo);
-    if (mismoDestino(destinoDe(vigente), datos.destino)) {
-      throw new ErrorDeNegocio("El activo ya está asignado a ese destino");
-    }
-    validarDestino(tx, datos.destino);
-    cerrar(tx, vigente, datos.fecha);
-    abrir(tx, activo.id, datos.destino, datos.fecha, datos.motivo);
-  });
+  const activo = obtenerActivoUtilizable(tx, datos.activoId);
+  const vigente = exigirVigente(tx, activo.id, activo.codigo);
+  if (mismoDestino(destinoDe(vigente), datos.destino)) {
+    throw new ErrorDeNegocio("El activo ya está asignado a ese destino");
+  }
+  validarDestino(tx, datos.destino);
+  cerrar(tx, vigente, datos.fecha);
+  abrir(tx, activo.id, datos.destino, datos.fecha, datos.motivo);
+}
+
+/**
+ * Deja el activo en el destino: lo asigna si está disponible, lo traslada si
+ * está en otro lado y no hace nada si ya está ahí.
+ */
+export function llevarADestinoEn(tx: Tx, datos: DatosAsignar) {
+  validarFecha(datos.fecha);
+  const activo = obtenerActivoUtilizable(tx, datos.activoId);
+  const vigente = obtenerVigente(tx, activo.id);
+  if (!vigente) return asignarEn(tx, datos);
+  if (mismoDestino(destinoDe(vigente), datos.destino)) return;
+  trasladarEn(tx, datos);
 }
 
 export function devolver(db: Db, datos: { activoId: number; fecha: string }) {
@@ -195,25 +214,27 @@ export function intercambiar(
   });
 }
 
-export function darDeBaja(
-  db: Db,
-  datos: { activoId: number; fecha: string; motivo?: string },
-) {
-  validarFecha(datos.fecha);
-  db.transaction((tx) => {
-    const activo = obtenerActivoUtilizable(tx, datos.activoId);
-    const vigente = obtenerVigente(tx, activo.id);
-    if (vigente) cerrar(tx, vigente, datos.fecha);
+type DatosBaja = { activoId: number; fecha: string; motivo?: string };
 
-    const nota = `Dado de baja el ${formatearFecha(datos.fecha)}${datos.motivo ? `: ${datos.motivo}` : ""}`;
-    tx.update(activos)
-      .set({
-        estado: "dado_de_baja",
-        observaciones: activo.observaciones ? `${activo.observaciones}\n${nota}` : nota,
-      })
-      .where(eq(activos.id, activo.id))
-      .run();
-  });
+export function darDeBaja(db: Db, datos: DatosBaja) {
+  db.transaction((tx) => darDeBajaEn(tx, datos));
+}
+
+/** Igual que darDeBaja, dentro de una transacción ya abierta. */
+export function darDeBajaEn(tx: Tx, datos: DatosBaja) {
+  validarFecha(datos.fecha);
+  const activo = obtenerActivoUtilizable(tx, datos.activoId);
+  const vigente = obtenerVigente(tx, activo.id);
+  if (vigente) cerrar(tx, vigente, datos.fecha);
+
+  const nota = `Dado de baja el ${formatearFecha(datos.fecha)}${datos.motivo ? `: ${datos.motivo}` : ""}`;
+  tx.update(activos)
+    .set({
+      estado: "dado_de_baja",
+      observaciones: activo.observaciones ? `${activo.observaciones}\n${nota}` : nota,
+    })
+    .where(eq(activos.id, activo.id))
+    .run();
 }
 
 export function retirarFuncionario(

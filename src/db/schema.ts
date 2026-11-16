@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  blob,
   check,
   index,
   integer,
@@ -34,6 +35,8 @@ export const ESTADOS_ACTIVO = [
 ] as const;
 
 export const TIPOS_MANTENIMIENTO = ["preventivo", "correctivo"] as const;
+
+export const TIPOS_ACTA = ["entrega", "egreso", "baja"] as const;
 
 // ---------------------------------------------------------------------------
 // Especificaciones propias de cada tipo de activo (columna JSON "specs")
@@ -86,6 +89,7 @@ export const funcionarios = sqliteTable(
     nombre: text("nombre").notNull(),
     cargo: text("cargo"),
     telefono: text("telefono"),
+    correo: text("correo"),
     ubicacionId: integer("ubicacion_id").references(() => ubicaciones.id),
     // true cuando ya no trabaja en la empresa; no se borra para conservar el historial
     retirado: integer("retirado", { mode: "boolean" }).notNull().default(false),
@@ -185,6 +189,86 @@ export const configuracion = sqliteTable("configuracion", {
   aprobadoCargo: text("aprobado_cargo"),
 });
 
+// Encabezado y pie de cada formato de acta (una fila por tipo). Si no hay fila,
+// se usan los valores de los formatos aprobados (src/dominio/actas.ts).
+export const formatosActa = sqliteTable("formatos_acta", {
+  tipo: text("tipo", { enum: TIPOS_ACTA }).primaryKey(),
+  codigo: text("codigo"),
+  version: text("version"),
+  fechaEmision: text("fecha_emision"),
+  elaboradoNombre: text("elaborado_nombre"),
+  elaboradoCargo: text("elaborado_cargo"),
+  revisadoNombre: text("revisado_nombre"),
+  revisadoCargo: text("revisado_cargo"),
+  aprobadoNombre: text("aprobado_nombre"),
+  aprobadoCargo: text("aprobado_cargo"),
+});
+
+// Actas de entrega, egreso y baja. "datos" es la copia fija de todo lo que se
+// imprime: reimprimir muestra lo firmado aunque luego cambien los equipos.
+export const actas = sqliteTable(
+  "actas",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    tipo: text("tipo", { enum: TIPOS_ACTA }).notNull(),
+    numero: integer("numero").notNull(), // consecutivo por tipo: ENT-0001
+    fecha: text("fecha").notNull(), // "AAAA-MM-DD"
+    // Para buscar: responsable de la entrega/baja o destino del egreso
+    funcionarioId: integer("funcionario_id").references(() => funcionarios.id),
+    ubicacionId: integer("ubicacion_id").references(() => ubicaciones.id),
+    datos: text("datos", { mode: "json" }).notNull().$type<Record<string, unknown>>(),
+    foto: blob("foto", { mode: "buffer" }),
+    fotoTipo: text("foto_tipo"), // "image/jpeg"
+    creadaEn: integer("creada_en", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    editadaEn: integer("editada_en", { mode: "timestamp" }),
+  },
+  (t) => [
+    uniqueIndex("actas_tipo_numero_unico").on(t.tipo, t.numero),
+    index("actas_fecha_idx").on(t.fecha),
+    index("actas_funcionario_idx").on(t.funcionarioId),
+  ],
+);
+
+// Equipos que incluye cada acta (para buscarlas por código de equipo)
+export const actasActivos = sqliteTable(
+  "actas_activos",
+  {
+    actaId: integer("acta_id")
+      .notNull()
+      .references(() => actas.id),
+    activoId: integer("activo_id")
+      .notNull()
+      .references(() => activos.id),
+  },
+  (t) => [
+    uniqueIndex("actas_activos_unico").on(t.actaId, t.activoId),
+    index("actas_activos_activo_idx").on(t.activoId),
+  ],
+);
+
+// Versión anterior de un acta, guardada cada vez que se edita
+export const actasVersiones = sqliteTable(
+  "actas_versiones",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    actaId: integer("acta_id")
+      .notNull()
+      .references(() => actas.id),
+    fecha: text("fecha").notNull(),
+    funcionarioId: integer("funcionario_id"),
+    ubicacionId: integer("ubicacion_id"),
+    activoIds: text("activo_ids", { mode: "json" }).notNull().$type<number[]>(),
+    datos: text("datos", { mode: "json" }).notNull().$type<Record<string, unknown>>(),
+    foto: blob("foto", { mode: "buffer" }),
+    fotoTipo: text("foto_tipo"),
+    // Cuándo dejó de ser la versión vigente
+    reemplazadaEn: integer("reemplazada_en", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [index("actas_versiones_acta_idx").on(t.actaId)],
+);
+
 // ---------------------------------------------------------------------------
 // Tipos para usar en el resto de la app
 // ---------------------------------------------------------------------------
@@ -195,3 +279,6 @@ export type Activo = typeof activos.$inferSelect;
 export type NuevoActivo = typeof activos.$inferInsert;
 export type Asignacion = typeof asignaciones.$inferSelect;
 export type Mantenimiento = typeof mantenimientos.$inferSelect;
+export type TipoActa = (typeof TIPOS_ACTA)[number];
+export type Acta = typeof actas.$inferSelect;
+export type FormatoActa = typeof formatosActa.$inferSelect;

@@ -8,6 +8,13 @@
       "when": 1794674721488,
       "tag": "0000_fantastic_captain_flint",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1794844668422,
+      "tag": "0001_giant_earthquake",
+      "breakpoints": true
     }
   ]
 }

@@ -50,3 +50,6 @@ next-env.d.ts
 # Datos reales de la empresa: no se versionan
 docs/*.xlsx
 docs/*.xls
+
+# Formatos con datos personales
+docs/*.pdf

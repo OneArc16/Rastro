@@ -1,0 +1,947 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "18fc970b-e7af-49cb-8dcd-528b525eafa0",
+  "prevId": "674b14c4-5dfb-4df9-bf01-3fe98b901937",
+  "tables": {
+    "actas": {
+      "name": "actas",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "numero": {
+          "name": "numero",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fecha": {
+          "name": "fecha",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "funcionario_id": {
+          "name": "funcionario_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ubicacion_id": {
+          "name": "ubicacion_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "datos": {
+          "name": "datos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "foto": {
+          "name": "foto",
+          "type": "blob",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "foto_tipo": {
+          "name": "foto_tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "creada_en": {
+          "name": "creada_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "editada_en": {
+          "name": "editada_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "actas_tipo_numero_unico": {
+          "name": "actas_tipo_numero_unico",
+          "columns": [
+            "tipo",
+            "numero"
+          ],
+          "isUnique": true
+        },
+        "actas_fecha_idx": {
+          "name": "actas_fecha_idx",
+          "columns": [
+            "fecha"
+          ],
+          "isUnique": false
+        },
+        "actas_funcionario_idx": {
+          "name": "actas_funcionario_idx",
+          "columns": [
+            "funcionario_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "actas_funcionario_id_funcionarios_id_fk": {
+          "name": "actas_funcionario_id_funcionarios_id_fk",
+          "tableFrom": "actas",
+          "tableTo": "funcionarios",
+          "columnsFrom": [
+            "funcionario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "actas_ubicacion_id_ubicaciones_id_fk": {
+          "name": "actas_ubicacion_id_ubicaciones_id_fk",
+          "tableFrom": "actas",
+          "tableTo": "ubicaciones",
+          "columnsFrom": [
+            "ubicacion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "actas_activos": {
+      "name": "actas_activos",
+      "columns": {
+        "acta_id": {
+          "name": "acta_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "activo_id": {
+          "name": "activo_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "actas_activos_unico": {
+          "name": "actas_activos_unico",
+          "columns": [
+            "acta_id",
+            "activo_id"
+          ],
+          "isUnique": true
+        },
+        "actas_activos_activo_idx": {
+          "name": "actas_activos_activo_idx",
+          "columns": [
+            "activo_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "actas_activos_acta_id_actas_id_fk": {
+          "name": "actas_activos_acta_id_actas_id_fk",
+          "tableFrom": "actas_activos",
+          "tableTo": "actas",
+          "columnsFrom": [
+            "acta_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "actas_activos_activo_id_activos_id_fk": {
+          "name": "actas_activos_activo_id_activos_id_fk",
+          "tableFrom": "actas_activos",
+          "tableTo": "activos",
+          "columnsFrom": [
+            "activo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "actas_versiones": {
+      "name": "actas_versiones",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "acta_id": {
+          "name": "acta_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fecha": {
+          "name": "fecha",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "funcionario_id": {
+          "name": "funcionario_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ubicacion_id": {
+          "name": "ubicacion_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "activo_ids": {
+          "name": "activo_ids",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "datos": {
+          "name": "datos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "foto": {
+          "name": "foto",
+          "type": "blob",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "foto_tipo": {
+          "name": "foto_tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "reemplazada_en": {
+          "name": "reemplazada_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "actas_versiones_acta_idx": {
+          "name": "actas_versiones_acta_idx",
+          "columns": [
+            "acta_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "actas_versiones_acta_id_actas_id_fk": {
+          "name": "actas_versiones_acta_id_actas_id_fk",
+          "tableFrom": "actas_versiones",
+          "tableTo": "actas",
+          "columnsFrom": [
+            "acta_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "activos": {
+      "name": "activos",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "codigo": {
+          "name": "codigo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "marca": {
+          "name": "marca",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "modelo": {
+          "name": "modelo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "serial": {
+          "name": "serial",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'operativo'"
+        },
+        "valor": {
+          "name": "valor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fecha_compra": {
+          "name": "fecha_compra",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "garantia_hasta": {
+          "name": "garantia_hasta",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "specs": {
+          "name": "specs",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "observaciones": {
+          "name": "observaciones",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "activos_codigo_unique": {
+          "name": "activos_codigo_unique",
+          "columns": [
+            "codigo"
+          ],
+          "isUnique": true
+        },
+        "activos_tipo_idx": {
+          "name": "activos_tipo_idx",
+          "columns": [
+            "tipo"
+          ],
+          "isUnique": false
+        },
+        "activos_estado_idx": {
+          "name": "activos_estado_idx",
+          "columns": [
+            "estado"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "asignaciones": {
+      "name": "asignaciones",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "activo_id": {
+          "name": "activo_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "funcionario_id": {
+          "name": "funcionario_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ubicacion_id": {
+          "name": "ubicacion_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fecha_desde": {
+          "name": "fecha_desde",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fecha_hasta": {
+          "name": "fecha_hasta",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "motivo": {
+          "name": "motivo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "asignaciones_funcionario_idx": {
+          "name": "asignaciones_funcionario_idx",
+          "columns": [
+            "funcionario_id"
+          ],
+          "isUnique": false
+        },
+        "asignaciones_ubicacion_idx": {
+          "name": "asignaciones_ubicacion_idx",
+          "columns": [
+            "ubicacion_id"
+          ],
+          "isUnique": false
+        },
+        "asignaciones_vigente_unica": {
+          "name": "asignaciones_vigente_unica",
+          "columns": [
+            "activo_id"
+          ],
+          "isUnique": true,
+          "where": "\"asignaciones\".\"fecha_hasta\" is null"
+        }
+      },
+      "foreignKeys": {
+        "asignaciones_activo_id_activos_id_fk": {
+          "name": "asignaciones_activo_id_activos_id_fk",
+          "tableFrom": "asignaciones",
+          "tableTo": "activos",
+          "columnsFrom": [
+            "activo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "asignaciones_funcionario_id_funcionarios_id_fk": {
+          "name": "asignaciones_funcionario_id_funcionarios_id_fk",
+          "tableFrom": "asignaciones",
+          "tableTo": "funcionarios",
+          "columnsFrom": [
+            "funcionario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "asignaciones_ubicacion_id_ubicaciones_id_fk": {
+          "name": "asignaciones_ubicacion_id_ubicaciones_id_fk",
+          "tableFrom": "asignaciones",
+          "tableTo": "ubicaciones",
+          "columnsFrom": [
+            "ubicacion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "asignaciones_destino_check": {
+          "name": "asignaciones_destino_check",
+          "value": "(\"asignaciones\".\"funcionario_id\" is not null) <> (\"asignaciones\".\"ubicacion_id\" is not null)"
+        }
+      }
+    },
+    "configuracion": {
+      "name": "configuracion",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "codigo_formato": {
+          "name": "codigo_formato",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "version_formato": {
+          "name": "version_formato",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fecha_emision": {
+          "name": "fecha_emision",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "elaborado_nombre": {
+          "name": "elaborado_nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "elaborado_cargo": {
+          "name": "elaborado_cargo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "revisado_nombre": {
+          "name": "revisado_nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "revisado_cargo": {
+          "name": "revisado_cargo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "aprobado_nombre": {
+          "name": "aprobado_nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "aprobado_cargo": {
+          "name": "aprobado_cargo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "formatos_acta": {
+      "name": "formatos_acta",
+      "columns": {
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "codigo": {
+          "name": "codigo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fecha_emision": {
+          "name": "fecha_emision",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "elaborado_nombre": {
+          "name": "elaborado_nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "elaborado_cargo": {
+          "name": "elaborado_cargo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "revisado_nombre": {
+          "name": "revisado_nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "revisado_cargo": {
+          "name": "revisado_cargo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "aprobado_nombre": {
+          "name": "aprobado_nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "aprobado_cargo": {
+          "name": "aprobado_cargo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "funcionarios": {
+      "name": "funcionarios",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cargo": {
+          "name": "cargo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "telefono": {
+          "name": "telefono",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "correo": {
+          "name": "correo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ubicacion_id": {
+          "name": "ubicacion_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "retirado": {
+          "name": "retirado",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        }
+      },
+      "indexes": {
+        "funcionarios_ubicacion_idx": {
+          "name": "funcionarios_ubicacion_idx",
+          "columns": [
+            "ubicacion_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "funcionarios_ubicacion_id_ubicaciones_id_fk": {
+          "name": "funcionarios_ubicacion_id_ubicaciones_id_fk",
+          "tableFrom": "funcionarios",
+          "tableTo": "ubicaciones",
+          "columnsFrom": [
+            "ubicacion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "mantenimientos": {
+      "name": "mantenimientos",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "activo_id": {
+          "name": "activo_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fecha": {
+          "name": "fecha",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "proxima_fecha": {
+          "name": "proxima_fecha",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "observacion": {
+          "name": "observacion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "mantenimientos_activo_idx": {
+          "name": "mantenimientos_activo_idx",
+          "columns": [
+            "activo_id"
+          ],
+          "isUnique": false
+        },
+        "mantenimientos_proxima_idx": {
+          "name": "mantenimientos_proxima_idx",
+          "columns": [
+            "proxima_fecha"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "mantenimientos_activo_id_activos_id_fk": {
+          "name": "mantenimientos_activo_id_activos_id_fk",
+          "tableFrom": "mantenimientos",
+          "tableTo": "activos",
+          "columnsFrom": [
+            "activo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "ubicaciones": {
+      "name": "ubicaciones",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "ubicaciones_nombre_unique": {
+          "name": "ubicaciones_nombre_unique",
+          "columns": [
+            "nombre"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}
