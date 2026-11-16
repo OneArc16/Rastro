@@ -126,12 +126,13 @@ export const esquemaDatosEgreso = z.object({
 // Baja (FCOM-01)
 // ---------------------------------------------------------------------------
 
+/** Textos literales del formato FCOM-01. */
 export const CALIFICACIONES_BAJA = [
-  "Depósito y aprovechamiento de piezas",
-  "Daño en circuitos eléctricos",
-  "Uso inapropiado",
+  "Baja para depósito y aprovechamiento futuro de piezas o componentes",
+  "Baja por daño en circuitos eléctricos",
+  "Baja por uso inapropiado",
   "Baja definitiva",
-  "Deterioro, no enciende",
+  "Baja por deterioro equipo no enciende",
   "Otros",
 ] as const;
 

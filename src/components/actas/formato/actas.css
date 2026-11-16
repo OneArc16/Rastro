@@ -1,0 +1,197 @@
+/*
+ * Formatos impresos de las actas (docs/*ACTA*.pdf).
+ * Medidas físicas para que pantalla e impresión coincidan en tamaño carta.
+ * Cada formato tiene sus propios márgenes: la hoja los lleva como relleno y,
+ * al imprimir, la página no tiene márgenes (regla @page en comunes.tsx).
+ */
+
+.ac-contenedor {
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.ac-hojas {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: max-content;
+  margin: 0 auto;
+}
+
+/* Una hoja carta: en pantalla con sus márgenes como relleno */
+.ac-hoja {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 8.5in;
+  height: 11in;
+  background: #ffffff;
+  color: #000000;
+  line-height: 1.15;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.2);
+}
+
+.ac-entrega {
+  padding: 0.7in 0.45in 0.55in 0.5in;
+  font-family: Arial, var(--fuente-arial), sans-serif;
+  font-size: 10pt;
+}
+
+.ac-egreso {
+  padding: 0.68in 0.82in 0.55in 0.72in;
+  font-family: Arial, var(--fuente-arial), sans-serif;
+  font-size: 9pt;
+}
+
+.ac-baja {
+  padding: 0.5in 0.45in 0.25in 0.38in;
+  /* Century Gothic viene con Windows; Questrial es la alternativa libre más parecida */
+  font-family: "Century Gothic", var(--fuente-gothic), sans-serif;
+  font-size: 8pt;
+}
+
+.ac-cuerpo {
+  flex: 1;
+}
+
+/* El pie de firmas va al final de cada hoja */
+.ac-pie {
+  margin-top: auto;
+}
+
+/* Tablas */
+.ac-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.ac-tabla td,
+.ac-tabla th {
+  padding: 1pt 4pt;
+  border: 0.75pt solid #000000;
+  font-weight: 400;
+  text-align: left;
+  vertical-align: middle;
+  overflow-wrap: break-word;
+}
+
+.ac-tabla th {
+  font-weight: 700;
+}
+
+.ac-tabla .ac-centro {
+  text-align: center;
+}
+
+.ac-tabla .ac-arriba {
+  vertical-align: top;
+}
+
+.ac-tabla .ac-titulo {
+  font-weight: 700;
+  text-align: center;
+}
+
+.ac-negrita,
+.ac-tabla .ac-negrita {
+  font-weight: 700;
+}
+
+.ac-bloque {
+  margin-top: 12pt;
+  break-inside: avoid;
+}
+
+/* Encabezado */
+.ac-logo {
+  display: block;
+  max-width: 100%;
+  height: 40pt;
+  width: auto;
+  margin: 0 auto;
+}
+
+.ac-celdaLogo {
+  padding: 2pt !important;
+}
+
+/* Texto libre dentro de un recuadro (observación, software, detalle) */
+.ac-texto {
+  white-space: pre-wrap;
+}
+
+/* Resultado de una prueba: el formato trae OK y FALLA en gris para marcar uno */
+.ac-opcion {
+  color: #a6a6a6;
+  font-weight: 700;
+  text-align: center !important;
+}
+
+.ac-opcionMarcada {
+  color: #000000;
+  outline: 1.25pt solid #000000;
+  outline-offset: -3pt;
+  border-radius: 8pt;
+}
+
+/* Nombre impreso dentro del recuadro de firma */
+.ac-firmante {
+  display: block;
+  font-size: 8pt;
+}
+
+.ac-foto {
+  display: block;
+  max-width: 2.6in;
+  max-height: 2.2in;
+  margin-top: 2pt;
+  object-fit: contain;
+}
+
+/* Firmas en línea de la baja */
+.ac-lineasFirma {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 16pt;
+  font-weight: 700;
+  font-size: 10pt;
+}
+
+.ac-lineaFirma {
+  display: flex;
+  flex-direction: column;
+  min-width: 2.2in;
+}
+
+.ac-lineaFirma .ac-raya {
+  border-bottom: 0.75pt solid #000000;
+  min-height: 14pt;
+  font-weight: 400;
+  font-size: 8pt;
+  text-align: center;
+}
+
+@media print {
+  .ac-contenedor {
+    overflow: visible;
+    padding: 0;
+  }
+
+  .ac-hojas {
+    display: block;
+    width: auto;
+    gap: 0;
+  }
+
+  /* Misma hoja que en pantalla; un poco menos alta para no generar una página en blanco */
+  .ac-hoja {
+    height: 10.98in;
+    box-shadow: none;
+    break-after: page;
+  }
+
+  .ac-hoja:last-child {
+    break-after: auto;
+  }
+}
