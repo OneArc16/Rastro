@@ -271,6 +271,7 @@ export function obtenerFichaFuncionario(id: number) {
       nombre: funcionarios.nombre,
       cargo: funcionarios.cargo,
       telefono: funcionarios.telefono,
+      correo: funcionarios.correo,
       retirado: funcionarios.retirado,
       ubicacion: ubicaciones.nombre,
     })

@@ -11,6 +11,10 @@ export const esquemaFuncionarioFormulario = createInsertSchema(funcionarios, {
   nombre: z.string().trim().min(1, "El nombre es obligatorio").max(150),
   cargo: textoOpcional,
   telefono: textoOpcional,
+  correo: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.string().trim().email("El correo no es válido").max(150).optional(),
+  ),
   ubicacionId: z.preprocess(
     (v) => (v === "" || v === undefined ? null : v),
     z.coerce.number().int().positive().nullable(),

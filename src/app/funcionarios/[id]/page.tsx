@@ -55,7 +55,7 @@ export default async function PaginaFichaFuncionario({
       </div>
 
       <p className="text-sm text-muted-foreground">
-        {[funcionario.cargo, funcionario.ubicacion, funcionario.telefono]
+        {[funcionario.cargo, funcionario.ubicacion, funcionario.telefono, funcionario.correo]
           .filter(Boolean)
           .join(" · ") || "Sin datos de contacto"}
       </p>

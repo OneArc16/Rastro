@@ -197,3 +197,11 @@ export const esquemaActa = z.discriminatedUnion("tipo", [
 export type EntradaActa = z.output<typeof esquemaActa>;
 
 export { TIPOS_ACTA };
+
+/** Formulario de Configuración: encabezado y pie de un formato de acta. */
+export const esquemaFormatoActaFormulario = z.object({
+  tipo: z.enum(TIPOS_ACTA),
+  formato: esquemaFormatoImpreso.extend({
+    fechaEmision: z.union([z.literal(""), fechaObligatoria]).default(""),
+  }),
+});

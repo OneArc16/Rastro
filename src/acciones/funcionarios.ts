@@ -12,12 +12,14 @@ function aValoresDeFila(datos: {
   nombre: string;
   cargo?: string | null;
   telefono?: string | null;
+  correo?: string | null;
   ubicacionId: number | null;
 }) {
   return {
     nombre: datos.nombre,
     cargo: datos.cargo ?? null,
     telefono: datos.telefono ?? null,
+    correo: datos.correo ?? null,
     ubicacionId: datos.ubicacionId,
   };
 }

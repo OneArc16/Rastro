@@ -18,6 +18,7 @@ type Valores = {
   nombre: string;
   cargo: string;
   telefono: string;
+  correo: string;
   ubicacionId: string; // "" = sin ubicación; el esquema Zod lo convierte a null
 };
 
@@ -28,6 +29,7 @@ type Props = {
     nombre: string;
     cargo: string | null;
     telefono: string | null;
+    correo: string | null;
     ubicacionId: number | null;
   };
 };
@@ -48,6 +50,7 @@ export function FormularioFuncionario({ ubicaciones, funcionario }: Props) {
       nombre: funcionario?.nombre ?? "",
       cargo: funcionario?.cargo ?? "",
       telefono: funcionario?.telefono ?? "",
+      correo: funcionario?.correo ?? "",
       ubicacionId: funcionario?.ubicacionId ? String(funcionario.ubicacionId) : "",
     },
   });
@@ -94,6 +97,16 @@ export function FormularioFuncionario({ ubicaciones, funcionario }: Props) {
       <div className="space-y-2">
         <Label htmlFor="telefono">Teléfono</Label>
         <Input id="telefono" {...register("telefono")} placeholder="3104567890" />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="correo">Correo</Label>
+        <Input
+          id="correo"
+          type="email"
+          {...register("correo")}
+          placeholder="nombre@empresa.com"
+        />
       </div>
 
       <div className="space-y-2">
