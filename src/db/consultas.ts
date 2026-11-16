@@ -109,7 +109,11 @@ export function listarActivosParaMantenimiento() {
  * "ubicacion" es la efectiva: la de la asignación directa o, si el activo
  * está asignado a una persona, la ubicación de esa persona.
  */
-export function listarActivos() {
+/**
+ * Todos los activos con su asignación vigente. La ubicación es la de la asignación
+ * o, si el equipo está con un funcionario, la de ese funcionario.
+ */
+function activosConAsignacionVigente() {
   const ubicacionDelFuncionario = alias(ubicaciones, "ubicacion_funcionario");
 
   return db
@@ -120,7 +124,13 @@ export function listarActivos() {
       marca: activos.marca,
       modelo: activos.modelo,
       serial: activos.serial,
+      color: activos.color,
       estado: activos.estado,
+      valor: activos.valor,
+      fechaCompra: activos.fechaCompra,
+      garantiaHasta: activos.garantiaHasta,
+      specs: activos.specs,
+      observaciones: activos.observaciones,
       responsable: funcionarios.nombre,
       ubicacionAsignada: ubicaciones.nombre,
       ubicacionResponsable: ubicacionDelFuncionario.nombre,
@@ -135,14 +145,32 @@ export function listarActivos() {
     )
     .orderBy(asc(activos.codigo))
     .all()
-    .map((fila) => ({
-      ...fila,
-      ubicacion: fila.ubicacionAsignada ?? fila.ubicacionResponsable,
-      disponible:
-        fila.estado === "operativo" &&
-        fila.responsable === null &&
-        fila.ubicacionAsignada === null,
-    }));
+    .map((fila) => ({ ...fila, ubicacion: fila.ubicacionAsignada ?? fila.ubicacionResponsable }));
+}
+
+export function listarActivos() {
+  return activosConAsignacionVigente().map((fila) => ({
+    id: fila.id,
+    codigo: fila.codigo,
+    tipo: fila.tipo,
+    marca: fila.marca,
+    modelo: fila.modelo,
+    serial: fila.serial,
+    estado: fila.estado,
+    responsable: fila.responsable,
+    ubicacionAsignada: fila.ubicacionAsignada,
+    ubicacionResponsable: fila.ubicacionResponsable,
+    ubicacion: fila.ubicacion,
+    disponible:
+      fila.estado === "operativo" &&
+      fila.responsable === null &&
+      fila.ubicacionAsignada === null,
+  }));
+}
+
+/** Inventario completo, con todos los datos de cada activo, para exportarlo a Excel. */
+export function listarInventarioParaExportar() {
+  return activosConAsignacionVigente();
 }
 
 export type FilaInventario = ReturnType<typeof listarActivos>[number];
