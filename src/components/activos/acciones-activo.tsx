@@ -59,6 +59,7 @@ function DialogoMovimiento({
           : undefined
       }
       textoConfirmar={esTraslado ? "Trasladar" : "Asignar"}
+      mensajeExito={`${activo.codigo} ${esTraslado ? "trasladado" : "asignado"}`}
       alAbrir={() => {
         setTipo("funcionario");
         setDestinoId("");
@@ -96,6 +97,7 @@ function DialogoDevolver({ activo }: { activo: ActivoResumen }) {
       titulo={`Devolver ${activo.codigo}`}
       descripcion="Se cierra la asignación actual y el activo queda disponible."
       textoConfirmar="Devolver"
+      mensajeExito={`${activo.codigo} devuelto y disponible`}
       alAbrir={() => setFecha(hoyIso())}
       alConfirmar={() => devolverActivo({ activoId: activo.id, fecha })}
     >
@@ -128,6 +130,7 @@ function DialogoIntercambio({
       titulo={`Intercambiar ${activo.codigo}`}
       descripcion="Cada responsable queda con el equipo del otro, en una sola operación."
       textoConfirmar="Intercambiar"
+      mensajeExito="Intercambio registrado"
       alAbrir={() => {
         setOtroId("");
         setFecha(hoyIso());
@@ -164,6 +167,7 @@ function DialogoBaja({ activo }: { activo: ActivoResumen }) {
       titulo={`Dar de baja ${activo.codigo}`}
       descripcion="El activo no se borra: queda con su historial, pero ya no se puede asignar ni editar. Si está asignado, se cierra su asignación."
       textoConfirmar="Dar de baja"
+      mensajeExito={`${activo.codigo} dado de baja`}
       varianteConfirmar="destructive"
       alAbrir={() => {
         setFecha(hoyIso());

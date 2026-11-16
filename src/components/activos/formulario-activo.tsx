@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, type UseFormRegister } from "react-hook-form";
+import { toast } from "sonner";
 import { crearActivo, actualizarActivo } from "@/acciones/activos";
 import type { Activo, TIPOS_ACTIVO } from "@/db/schema";
 import { ETIQUETAS_TIPO } from "@/lib/etiquetas";
@@ -200,6 +201,9 @@ export function FormularioActivo({ propuestas, activo }: Props) {
         setErrorGeneral(resultado.error);
         return;
       }
+      toast.success(activo ? "Activo actualizado" : "Activo creado", {
+        description: valores.codigo,
+      });
       router.push(`/activos/${valores.codigo}`);
       router.refresh();
     });

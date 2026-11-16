@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { crearUbicacion, actualizarUbicacion } from "@/acciones/ubicaciones";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +41,9 @@ export function DialogoUbicacion({ ubicacion }: Props) {
       }
       setAbierto(false);
       setError(null);
+      toast.success(ubicacion ? "Ubicación actualizada" : "Ubicación creada", {
+        description: nombre,
+      });
       if (!ubicacion) setNombre("");
       router.refresh();
     });

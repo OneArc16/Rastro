@@ -27,6 +27,7 @@ export function DialogoRetiro({
       titulo={`Retirar a ${funcionario.nombre}`}
       descripcion={`No se borra: conserva su historial. ${aviso}`}
       textoConfirmar="Retirar"
+      mensajeExito={`${funcionario.nombre} retirado`}
       varianteConfirmar="destructive"
       alAbrir={() => setFecha(hoyIso())}
       alConfirmar={() => retirarFuncionarioAccion({ funcionarioId: funcionario.id, fecha })}

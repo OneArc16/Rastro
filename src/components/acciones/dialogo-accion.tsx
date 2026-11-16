@@ -2,6 +2,7 @@
 
 import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type { ResultadoAccion } from "@/acciones/resultado";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,8 @@ type Props = {
   titulo: string;
   descripcion?: string;
   textoConfirmar: string;
+  /** Aviso que se muestra cuando la acción se guarda. */
+  mensajeExito: string;
   varianteConfirmar?: VarianteBoton;
   /** Ejecuta la server action; si devuelve ok, el diálogo se cierra y la página se refresca. */
   alConfirmar: () => Promise<ResultadoAccion>;
@@ -37,6 +40,7 @@ export function DialogoAccion({
   titulo,
   descripcion,
   textoConfirmar,
+  mensajeExito,
   varianteConfirmar = "default",
   alConfirmar,
   alAbrir,
@@ -64,6 +68,7 @@ export function DialogoAccion({
         return;
       }
       setAbierto(false);
+      toast.success(mensajeExito);
       router.refresh();
     });
   }

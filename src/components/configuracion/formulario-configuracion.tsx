@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useForm, type UseFormRegister } from "react-hook-form";
+import { toast } from "sonner";
 import { guardarConfiguracion } from "@/acciones/configuracion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +48,7 @@ const FIRMAS = [
 ] as const;
 
 export function FormularioConfiguracion({ configuracion }: Props) {
-  const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [enviando, iniciarEnvio] = useTransition();
 
   const valorInicial = (clave: keyof Valores) => configuracion?.[clave] ?? "";
@@ -68,11 +69,12 @@ export function FormularioConfiguracion({ configuracion }: Props) {
   const alEnviar = handleSubmit((valores) => {
     iniciarEnvio(async () => {
       const resultado = await guardarConfiguracion(valores);
-      setMensaje(
-        resultado.ok
-          ? { ok: true, texto: "Configuración guardada." }
-          : { ok: false, texto: resultado.error },
-      );
+      if (!resultado.ok) {
+        setError(resultado.error);
+        return;
+      }
+      setError(null);
+      toast.success("Configuración guardada");
     });
   });
 
@@ -97,11 +99,7 @@ export function FormularioConfiguracion({ configuracion }: Props) {
         ))}
       </section>
 
-      {mensaje && (
-        <p className={mensaje.ok ? "text-sm text-muted-foreground" : "text-sm text-destructive"}>
-          {mensaje.texto}
-        </p>
-      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <Button type="submit" disabled={enviando}>
         {enviando ? "Guardando..." : "Guardar"}

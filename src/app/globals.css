@@ -174,3 +174,157 @@
     transition: none !important;
   }
 }
+
+/*
+ * Avisos (Sonner, sin estilos propios). Cada tipo define --tono: la franja izquierda,
+ * la placa del ícono y la barra de tiempo salen de ese único color.
+ * La barra se dibuja como fondo porque Sonner ya usa ::before y ::after de cada aviso.
+ */
+.aviso {
+  --tono: var(--primary);
+  width: var(--width);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 2.25rem 0.875rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  color: var(--popover-foreground);
+  background:
+    linear-gradient(color-mix(in oklch, var(--tono) 70%, transparent) 0 0) left bottom / 100% 3px
+      no-repeat,
+    var(--popover);
+  box-shadow:
+    inset 3px 0 0 var(--tono),
+    0 12px 32px -14px oklch(0.2 0.05 262 / 35%),
+    0 2px 6px -2px oklch(0.2 0.05 262 / 12%);
+  font-family: var(--font-sans);
+  animation: aviso-tiempo var(--duracion-aviso) linear forwards;
+}
+
+.aviso[data-type="success"] {
+  --tono: var(--success);
+}
+.aviso[data-type="error"] {
+  --tono: var(--destructive);
+}
+.aviso[data-type="warning"] {
+  --tono: var(--warning);
+}
+.aviso[data-type="loading"] {
+  --tono: var(--muted-foreground);
+  animation: none;
+  background-size: 0 0, auto;
+}
+
+/* Sonner congela el tiempo mientras el puntero está sobre la pila: la barra también */
+[data-sonner-toaster]:hover .aviso {
+  animation-play-state: paused;
+}
+
+/* Los avisos apilados detrás del primero solo muestran su borde */
+.aviso[data-expanded="false"][data-front="false"] > * {
+  opacity: 0;
+}
+
+.aviso-icono {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  color: var(--tono);
+  background: color-mix(in oklch, var(--tono) 14%, transparent);
+}
+.aviso-icono svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.aviso-contenido {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding-top: 0.3rem;
+}
+.aviso-titulo {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.aviso-descripcion {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+}
+
+.aviso-cerrar {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+  color: var(--muted-foreground);
+  opacity: 0.7;
+  cursor: pointer;
+  transition:
+    opacity 0.15s,
+    background-color 0.15s;
+}
+.aviso-cerrar:hover,
+.aviso-cerrar:focus-visible {
+  opacity: 1;
+  background: var(--muted);
+}
+.aviso-cerrar svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.aviso-accion,
+.aviso-cancelar {
+  align-self: center;
+  flex-shrink: 0;
+  height: 1.75rem;
+  padding: 0 0.625rem;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.aviso-accion {
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+.aviso-cancelar {
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+}
+
+@keyframes aviso-tiempo {
+  from {
+    background-size: 100% 3px, auto;
+  }
+  to {
+    background-size: 0% 3px, auto;
+  }
+}
+
+/* Con "reducir movimiento" Sonner apaga las animaciones: sin barra que se vacíe, mejor no mostrarla */
+@media (prefers-reduced-motion: reduce) {
+  .aviso {
+    background-size: 0 0, auto;
+  }
+}
+
+@media print {
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+}

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { crearFuncionario, actualizarFuncionario } from "@/acciones/funcionarios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +64,9 @@ export function FormularioFuncionario({ ubicaciones, funcionario }: Props) {
         setErrorGeneral(resultado.error);
         return;
       }
+      toast.success(funcionario ? "Funcionario actualizado" : "Funcionario creado", {
+        description: valores.nombre,
+      });
       router.push("/funcionarios");
       router.refresh();
     });

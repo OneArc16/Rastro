@@ -35,6 +35,7 @@ export function DialogoMantenimiento(props: Props) {
       varianteDisparador={props.varianteDisparador ?? "outline"}
       titulo={activoFijo ? `Mantenimiento de ${activoFijo.codigo}` : "Registrar mantenimiento"}
       textoConfirmar="Registrar"
+      mensajeExito="Mantenimiento registrado"
       alAbrir={() => {
         setActivoId(activoFijo ? String(activoFijo.id) : "");
         setFecha(hoyIso());
