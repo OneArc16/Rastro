@@ -16,6 +16,7 @@ import {
   type TipoActa,
 } from "@/db/schema";
 import {
+  ESQUEMA_DATOS_POR_TIPO,
   MAXIMO_BYTES_FOTO,
   TIPOS_FOTO,
   type FormatoImpreso,
@@ -132,12 +133,39 @@ function validarReferencias(tx: Tx, datos: DatosActa) {
   return unicos;
 }
 
+/** Devuelve el contenido validado con el esquema de su tipo de acta. */
+function validarContenido(tipo: TipoActa, datos: Record<string, unknown>) {
+  const resultado = ESQUEMA_DATOS_POR_TIPO[tipo].safeParse(datos);
+  if (!resultado.success) throw new ErrorDeNegocio("El contenido del acta no es válido");
+  return resultado.data as Record<string, unknown>;
+}
+
+/** Primeros bytes de cada tipo de imagen permitido. */
+function esImagenDelTipo(contenido: Buffer, tipo: string) {
+  switch (tipo) {
+    case "image/jpeg":
+      return contenido.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]));
+    case "image/png":
+      return contenido.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    case "image/webp":
+      return (
+        contenido.subarray(0, 4).toString("latin1") === "RIFF" &&
+        contenido.subarray(8, 12).toString("latin1") === "WEBP"
+      );
+    default:
+      return false;
+  }
+}
+
 function validarFoto(foto: Foto) {
   if (!(TIPOS_FOTO as readonly string[]).includes(foto.tipo)) {
     throw new ErrorDeNegocio("La foto debe ser JPG, PNG o WEBP");
   }
   if (foto.contenido.length > MAXIMO_BYTES_FOTO) {
     throw new ErrorDeNegocio("La foto es demasiado grande");
+  }
+  if (!esImagenDelTipo(foto.contenido, foto.tipo)) {
+    throw new ErrorDeNegocio("El archivo no es una imagen válida");
   }
 }
 
@@ -157,7 +185,8 @@ function guardarEquipos(tx: Tx, actaId: number, activoIds: number[]) {
  * Crea el acta dentro de una transacción ya abierta, para que otras
  * operaciones (dar de baja, trasladar) queden en el mismo todo o nada.
  */
-export function crearActaEn(tx: Tx, datos: DatosActa & { foto?: Foto }) {
+function crearActaEn(tx: Tx, datos: DatosActa & { foto?: Foto }) {
+  const contenido = validarContenido(datos.tipo, datos.datos);
   const activoIds = validarReferencias(tx, datos);
   if (datos.foto) validarFoto(datos.foto);
 
@@ -176,7 +205,7 @@ export function crearActaEn(tx: Tx, datos: DatosActa & { foto?: Foto }) {
       fecha: datos.fecha,
       funcionarioId: datos.funcionarioId ?? null,
       ubicacionId: datos.ubicacionId ?? null,
-      datos: datos.datos,
+      datos: contenido,
       foto: datos.foto?.contenido ?? null,
       fotoTipo: datos.foto?.tipo ?? null,
     })
@@ -187,12 +216,17 @@ export function crearActaEn(tx: Tx, datos: DatosActa & { foto?: Foto }) {
   return { id, codigo: codigoActa(datos.tipo, numero) };
 }
 
-export function crearActa(db: Db, datos: DatosActa & { foto?: Foto }) {
+/**
+ * Acta de entrega: no cambia asignaciones. La baja y el egreso se crean con
+ * crearActaDeBaja y crearActaDeEgreso, que también cambian los equipos.
+ */
+export function crearActa(db: Db, datos: DatosActa & { tipo: "entrega"; foto?: Foto }) {
   return db.transaction((tx) => crearActaEn(tx, datos));
 }
 
 /**
  * Reemplaza el contenido del acta y guarda el anterior como versión.
+ * Es una corrección del documento: no vuelve a trasladar equipos.
  * foto: undefined la conserva, null la quita, un valor la reemplaza.
  */
 export function editarActa(
@@ -205,6 +239,7 @@ export function editarActa(
     if (datos.tipo !== undefined && datos.tipo !== actual.tipo) {
       throw new ErrorDeNegocio("No se puede cambiar el tipo de un acta");
     }
+    const contenido = validarContenido(actual.tipo, datos.datos);
     const activoIds = validarReferencias(tx, { ...datos, tipo: actual.tipo });
     if (datos.foto) validarFoto(datos.foto);
 
@@ -214,6 +249,14 @@ export function editarActa(
       .where(eq(actasActivos.actaId, actual.id))
       .all()
       .map((fila) => fila.activoId);
+    // El equipo de una baja ya quedó dado de baja al crearla: cambiarlo dejaría
+    // un acta que no corresponde al estado real de los equipos.
+    const mismosEquipos =
+      activoIds.length === equiposAnteriores.length &&
+      activoIds.every((activoId) => equiposAnteriores.includes(activoId));
+    if (actual.tipo === "baja" && !mismosEquipos) {
+      throw new ErrorDeNegocio("No se puede cambiar el equipo de un acta de baja");
+    }
 
     const ahora = new Date();
     tx.insert(actasVersiones)
@@ -239,7 +282,7 @@ export function editarActa(
         fecha: datos.fecha,
         funcionarioId: datos.funcionarioId ?? null,
         ubicacionId: datos.ubicacionId ?? null,
-        datos: datos.datos,
+        datos: contenido,
         editadaEn: ahora,
         ...foto,
       })

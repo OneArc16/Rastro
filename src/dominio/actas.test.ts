@@ -162,7 +162,7 @@ describe("crearActa", () => {
 
 describe("editarActa", () => {
   it("guarda la versión anterior completa y marca el acta como editada", () => {
-    const foto = Buffer.from([1, 2, 3]);
+    const foto = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1]);
     const { id } = crearActa(db, {
       tipo: "entrega",
       fecha: "2026-11-16",
@@ -213,7 +213,7 @@ describe("editarActa", () => {
       fecha: "2026-11-16",
       activoIds: [],
       datos: datosEntrega("v1"),
-      foto: { contenido: Buffer.from([1]), tipo: "image/jpeg" },
+      foto: { contenido: Buffer.from([0xff, 0xd8, 0xff, 1]), tipo: "image/jpeg" },
     });
     editarActa(db, { id, fecha: "2026-11-16", activoIds: [], datos: datosEntrega("v2") });
     editarActa(db, {
@@ -447,5 +447,75 @@ describe("acta de egreso", () => {
     ).toThrow(new ErrorDeNegocio("El activo MON-001 está dado de baja"));
     expect(db.select().from(actas).all()).toHaveLength(0);
     expect(db.select().from(asignaciones).all()).toHaveLength(0);
+  });
+});
+
+describe("protecciones del historial", () => {
+  const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0]);
+
+  it("no permite cambiar el equipo de un acta de baja al editarla", () => {
+    const datos = esquemaDatosBaja.parse({
+      formato: FORMATOS_PREDETERMINADOS.baja,
+      responsable: {},
+      equipo: {},
+      calificaciones: [],
+      diagnostico: {},
+      jefeArea: {},
+    });
+    const { id } = crearActaDeBaja(db, { fecha: "2026-11-16", activoId: pc, datos });
+
+    expect(() =>
+      editarActa(db, { id, fecha: "2026-11-16", activoIds: [monitor], datos }),
+    ).toThrow(new ErrorDeNegocio("No se puede cambiar el equipo de un acta de baja"));
+    editarActa(db, { id, fecha: "2026-11-17", activoIds: [pc], datos });
+    expect(db.select().from(actas).get()?.fecha).toBe("2026-11-17");
+  });
+
+  it("rechaza contenido que no corresponde al tipo del acta", () => {
+    const { id } = crearActa(db, {
+      tipo: "entrega",
+      fecha: "2026-11-16",
+      activoIds: [],
+      datos: datosEntrega(),
+    });
+    expect(() =>
+      editarActa(db, { id, fecha: "2026-11-16", activoIds: [], datos: { cualquier: "cosa" } }),
+    ).toThrow(new ErrorDeNegocio("El contenido del acta no es válido"));
+    expect(db.select().from(actasVersiones).all()).toHaveLength(0);
+  });
+
+  it("rechaza fotos que no son imágenes o son demasiado grandes sin guardar el acta", () => {
+    const crear = (contenido: Buffer, tipo: string) =>
+      crearActa(db, {
+        tipo: "entrega",
+        fecha: "2026-11-16",
+        activoIds: [],
+        datos: datosEntrega(),
+        foto: { contenido, tipo },
+      });
+
+    expect(() => crear(jpeg, "image/gif")).toThrow(
+      new ErrorDeNegocio("La foto debe ser JPG, PNG o WEBP"),
+    );
+    expect(() => crear(Buffer.from("<script>"), "image/jpeg")).toThrow(
+      new ErrorDeNegocio("El archivo no es una imagen válida"),
+    );
+    const enorme = Buffer.concat([jpeg, Buffer.alloc(2 * 1024 * 1024)]);
+    expect(() => crear(enorme, "image/jpeg")).toThrow(
+      new ErrorDeNegocio("La foto es demasiado grande"),
+    );
+    expect(db.select().from(actas).all()).toHaveLength(0);
+  });
+
+  it("rechaza una ubicación que no existe", () => {
+    expect(() =>
+      crearActa(db, {
+        tipo: "entrega",
+        fecha: "2026-11-16",
+        ubicacionId: 9999,
+        activoIds: [],
+        datos: datosEntrega(),
+      }),
+    ).toThrow(new ErrorDeNegocio("La ubicación no existe"));
   });
 });
