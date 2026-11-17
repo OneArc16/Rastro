@@ -1,0 +1,19 @@
+services:
+  rastro:
+    build: .
+    image: rastro:latest
+    container_name: rastro
+    # Vuelve a arrancar solo cada vez que inicia Docker Desktop (por ejemplo, al prender el PC).
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      # Las fechas de la app son locales: misma zona horaria que el PC.
+      TZ: America/Bogota
+    volumes:
+      - rastro-datos:/app/data
+
+volumes:
+  rastro-datos:
+    name: rastro-datos

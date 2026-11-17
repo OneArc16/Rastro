@@ -19,6 +19,8 @@ const nextConfig: NextConfig = {
   // App local de un solo usuario: las páginas leen SQLite en cada petición,
   // sin caché de componentes (los datos deben verse siempre frescos).
   cacheComponents: false,
+  // Servidor autónomo en .next/standalone, el que usa la imagen de Docker.
+  output: "standalone",
   allowedDevOrigins: hostsDeDesarrollo(process.env.APP_BASE_URL),
   turbopack: {
     rules: {

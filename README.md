@@ -1,3 +1,44 @@
+## Instalación con Docker (uso diario)
+
+La app corre en un contenedor que arranca solo al prender el PC. Los datos
+(base SQLite, fotos y respaldos) viven en el volumen `rastro-datos`.
+
+Requisitos: Docker Desktop con «Start Docker Desktop when you sign in» activado
+y un archivo `.env` (copiá `.env.example`) con `APP_BASE_URL` apuntando a la IP
+del PC en la red local, por ejemplo `http://192.168.1.114:3000`.
+
+```bash
+docker compose up -d --build   # construye la imagen y deja la app corriendo
+docker compose logs -f         # ver la salida del servidor
+docker compose down            # detenerla (vuelve a arrancar con `up -d`)
+```
+
+Al iniciar, el contenedor aplica las migraciones pendientes. Si la base ya
+tenía datos, antes crea un respaldo en `data/respaldos/` dentro del volumen.
+
+Para actualizar después de cambiar el código: `docker compose up -d --build`.
+
+Para desarrollar en local con el contenedor corriendo, `pnpm dev` busca el
+primer puerto libre desde 3000 (en WSL también descarta los que usa Windows,
+como el de Docker) y avisa cuál tomó. Con `PORT=4000 pnpm dev` se fija uno.
+
+Cargar una base existente en un volumen vacío (una sola vez, con `pnpm dev` y
+el contenedor detenidos, para que no queden cambios a medias en `rastro.db-wal`):
+
+```bash
+docker run --rm -i -v rastro-datos:/app/data rastro:latest \
+  sh -c 'cat > /app/data/rastro.db' < data/rastro.db
+```
+
+Sacar una copia de la base desde el volumen (primero `docker compose stop`):
+
+```bash
+docker run --rm -v rastro-datos:/app/data rastro:latest \
+  cat /app/data/rastro.db > rastro-copia.db
+```
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
