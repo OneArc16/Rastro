@@ -84,6 +84,13 @@
   --chart-3: oklch(0.48 0.13 155);
   --chart-4: oklch(0.72 0.15 70);
   --chart-5: oklch(0.523 0.193 22.9);
+  /* Gráficas: series validadas para daltonismo (claro sobre la tarjeta blanca) */
+  --serie-preventivo: #2a78d6;
+  --serie-correctivo: #eb6834;
+  /* Estados: siempre van con ícono y texto, nunca solo color */
+  --estado-bueno: #0ca30c;
+  --estado-aviso: #fab219;
+  --estado-critico: #d03b3b;
   --radius: 0.75rem;
   --sidebar: oklch(0.27 0.075 258);
   --sidebar-foreground: oklch(0.86 0.025 252);
@@ -123,6 +130,9 @@
   --chart-3: oklch(0.7 0.14 155);
   --chart-4: oklch(0.8 0.14 75);
   --chart-5: oklch(0.72 0.19 22.9);
+  /* Mismos tonos, con el paso validado para la tarjeta oscura (#111826) */
+  --serie-preventivo: #3987e5;
+  --serie-correctivo: #d95926;
   --sidebar: oklch(0.14 0.025 262);
   --sidebar-foreground: oklch(0.8 0.025 252);
   --sidebar-primary: oklch(0.68 0.13 252);

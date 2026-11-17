@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 import {
+  ChartColumn,
   Home,
   Monitor,
   Users,
@@ -32,6 +33,7 @@ const ENLACES = [
   { href: "/funcionarios", etiqueta: "Funcionarios", icono: Users },
   { href: "/ubicaciones", etiqueta: "Ubicaciones", icono: MapPin },
   { href: "/mantenimientos", etiqueta: "Mantenimientos", icono: Wrench },
+  { href: "/graficas", etiqueta: "Gráficas", icono: ChartColumn },
   { href: "/actas", etiqueta: "Actas", icono: FileText },
   { href: "/etiquetas", etiqueta: "Etiquetas QR", icono: QrCode },
   { href: "/configuracion", etiqueta: "Configuración", icono: Settings },

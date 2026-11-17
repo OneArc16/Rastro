@@ -6,6 +6,7 @@
 import { and, asc, count, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import type { DatosHojaDeVida } from "@/dominio/hoja-de-vida";
+import type { FilaEstadistica } from "@/dominio/estadisticas";
 import { garantiasPorVencer, pendientesDeMantenimiento } from "@/dominio/mantenimientos";
 import { siguienteCodigo } from "@/lib/codigos";
 import { db } from "./index";
@@ -55,9 +56,9 @@ export function resumenInicio() {
   return { totalActivos, porEstado, porTipo, disponibles, totalFuncionarios };
 }
 
-/** Mantenimientos vencidos y próximos a la fecha dada. */
-export function alertasDeMantenimiento(hoy: string) {
-  const lista = db
+/** Todos los mantenimientos con el código y estado de su activo (para alertas y gráficas). */
+export function mantenimientosConActivo() {
+  return db
     .select({
       id: mantenimientos.id,
       activoId: mantenimientos.activoId,
@@ -70,7 +71,37 @@ export function alertasDeMantenimiento(hoy: string) {
     .from(mantenimientos)
     .innerJoin(activos, eq(activos.id, mantenimientos.activoId))
     .all();
-  return pendientesDeMantenimiento(lista, hoy);
+}
+
+/** Mantenimientos vencidos y próximos a la fecha dada. */
+export function alertasDeMantenimiento(hoy: string) {
+  return pendientesDeMantenimiento(mantenimientosConActivo(), hoy);
+}
+
+/**
+ * Mantenimientos para las gráficas, con la ubicación actual de su equipo:
+ * la de su asignación vigente (o la de su responsable).
+ */
+export function filasDeEstadistica(): FilaEstadistica[] {
+  const ubicacionResponsable = alias(ubicaciones, "ubicacion_responsable");
+  return db
+    .select({
+      activoId: mantenimientos.activoId,
+      fecha: mantenimientos.fecha,
+      tipo: mantenimientos.tipo,
+      ubicacionDirecta: ubicaciones.nombre,
+      ubicacionResponsable: ubicacionResponsable.nombre,
+    })
+    .from(mantenimientos)
+    .leftJoin(asignaciones, and(eq(asignaciones.activoId, mantenimientos.activoId), vigente))
+    .leftJoin(ubicaciones, eq(ubicaciones.id, asignaciones.ubicacionId))
+    .leftJoin(funcionarios, eq(funcionarios.id, asignaciones.funcionarioId))
+    .leftJoin(ubicacionResponsable, eq(ubicacionResponsable.id, funcionarios.ubicacionId))
+    .all()
+    .map(({ ubicacionDirecta, ubicacionResponsable, ...fila }) => ({
+      ...fila,
+      ubicacion: ubicacionDirecta ?? ubicacionResponsable,
+    }));
 }
 
 /** Activos cuya garantía vence pronto, a la fecha dada. */
