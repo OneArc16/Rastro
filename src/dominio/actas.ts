@@ -3,6 +3,7 @@
  * Un acta guarda la copia fija de lo que se imprime; se puede editar, y cada
  * edición conserva la versión anterior para que el historial sea confiable.
  */
+import { isDeepStrictEqual } from "node:util";
 import { and, asc, eq, inArray, isNull, max, sql } from "drizzle-orm";
 import type { Db } from "@/db";
 import {
@@ -18,6 +19,7 @@ import {
 } from "@/db/schema";
 import {
   ESQUEMA_DATOS_POR_TIPO,
+  esquemaFormatoImpreso,
   MAXIMO_BYTES_FOTO,
   MAXIMO_FOTOS,
   TIPOS_FOTO,
@@ -347,6 +349,43 @@ export function editarActa(
       .where(eq(actas.id, actual.id))
       .run();
     guardarEquipos(tx, actual.id, activoIds);
+  });
+}
+
+/** Indica si el encabezado y pie guardados en el acta son los de la configuración vigente. */
+export function tieneFormatoVigente(db: Db, tipo: TipoActa, datos: Record<string, unknown>) {
+  const guardado = esquemaFormatoImpreso.safeParse(datos.formato);
+  return (
+    guardado.success &&
+    isDeepStrictEqual(guardado.data, esquemaFormatoImpreso.parse(obtenerFormatoActa(db, tipo)))
+  );
+}
+
+/**
+ * Reemplaza el encabezado y pie del acta (código, versión, elaborado,
+ * revisado, aprobado) por la configuración vigente de su tipo. Es una
+ * edición más: el contenido anterior queda como versión.
+ */
+export function aplicarFormatoVigente(db: Db, id: number) {
+  const actual = db.select().from(actas).where(eq(actas.id, id)).get();
+  if (!actual) throw new ErrorDeNegocio("El acta no existe");
+  if (tieneFormatoVigente(db, actual.tipo, actual.datos)) {
+    throw new ErrorDeNegocio("El acta ya tiene la configuración vigente");
+  }
+  const activoIds = db
+    .select({ activoId: actasActivos.activoId })
+    .from(actasActivos)
+    .where(eq(actasActivos.actaId, id))
+    .all()
+    .map((fila) => fila.activoId);
+
+  editarActa(db, {
+    id,
+    fecha: actual.fecha,
+    funcionarioId: actual.funcionarioId ?? undefined,
+    ubicacionId: actual.ubicacionId ?? undefined,
+    activoIds,
+    datos: { ...actual.datos, formato: obtenerFormatoActa(db, actual.tipo) },
   });
 }
 

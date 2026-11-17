@@ -3,7 +3,7 @@
  * se muestran, para no cargar imágenes en listados ni fichas.
  */
 import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
-import { codigoActa, obtenerFormatoActa } from "@/dominio/actas";
+import { codigoActa, obtenerFormatoActa, tieneFormatoVigente } from "@/dominio/actas";
 import type { EquipoPrecarga, PersonaPrecarga } from "@/dominio/precarga-actas";
 import { buscarActasEn, type FiltrosActas } from "./busqueda-actas";
 import { db } from "./index";
@@ -87,6 +87,11 @@ export function obtenerActa(id: number) {
 }
 
 export type ActaCompleta = NonNullable<ReturnType<typeof obtenerActa>>;
+
+/** Si el encabezado y pie guardados en el acta coinciden con la configuración vigente. */
+export function actaConFormatoVigente(acta: Pick<ActaCompleta, "tipo" | "datos">) {
+  return tieneFormatoVigente(db, acta.tipo, acta.datos);
+}
 
 /** Una foto del acta (vigente o de una versión anterior), si pertenece a esa acta. */
 export function obtenerFotoActa(actaId: number, fotoId: number) {

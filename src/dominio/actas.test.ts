@@ -20,6 +20,7 @@ import {
   esquemaDatosEntrega,
 } from "@/lib/validacion/actas";
 import {
+  aplicarFormatoVigente,
   codigoActa,
   crearActa,
   crearActaDeBaja,
@@ -416,6 +417,53 @@ describe("formatos de acta", () => {
     expect(obtenerFormatoActa(db, "egreso")).toEqual(egreso);
     expect(obtenerFormatoActa(db, "baja")).toEqual(FORMATOS_PREDETERMINADOS.baja);
     expect(db.select().from(formatosActa).all()).toHaveLength(1);
+  });
+});
+
+describe("aplicarFormatoVigente", () => {
+  it("reemplaza el formato del acta por la configuración vigente y guarda la versión anterior", () => {
+    const { id } = crearActa(db, {
+      tipo: "entrega",
+      fecha: "2026-11-16",
+      funcionarioId: funcionario,
+      activoIds: [pc],
+      datos: datosEntrega("sin cambios"),
+      fotos: [{ contenido: JPEG(1), tipo: "image/jpeg" }],
+    });
+    const vigente = {
+      ...FORMATOS_PREDETERMINADOS.entrega,
+      version: "004",
+      elaborado: { nombre: "Quien Elabora", cargo: "Ingeniero" },
+    };
+    guardarFormatoActa(db, "entrega", vigente);
+
+    aplicarFormatoVigente(db, id);
+
+    const acta = db.select().from(actas).where(eq(actas.id, id)).get()!;
+    expect(acta.datos).toEqual({ ...datosEntrega("sin cambios"), formato: vigente });
+    expect(acta.fecha).toBe("2026-11-16");
+    expect(acta.funcionarioId).toBe(funcionario);
+    expect(db.select().from(actasActivos).where(eq(actasActivos.actaId, id)).all()).toHaveLength(1);
+    expect(fotosDe(id)).toHaveLength(1);
+    const versiones = db.select().from(actasVersiones).where(eq(actasVersiones.actaId, id)).all();
+    expect(versiones).toHaveLength(1);
+    expect(versiones[0].datos).toEqual(datosEntrega("sin cambios"));
+  });
+
+  it("no hace una versión nueva si el acta ya tiene la configuración vigente", () => {
+    const { id } = crearActa(db, {
+      tipo: "entrega",
+      fecha: "2026-11-16",
+      activoIds: [],
+      datos: datosEntrega(),
+    });
+    guardarFormatoActa(db, "entrega", datosEntrega().formato);
+
+    expect(() => aplicarFormatoVigente(db, id)).toThrow(
+      new ErrorDeNegocio("El acta ya tiene la configuración vigente"),
+    );
+    expect(() => aplicarFormatoVigente(db, 9999)).toThrow(new ErrorDeNegocio("El acta no existe"));
+    expect(db.select().from(actasVersiones).all()).toHaveLength(0);
   });
 });
 

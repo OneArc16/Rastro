@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { obtenerActa } from "@/db/consultas-actas";
+import { actaConFormatoVigente, obtenerActa } from "@/db/consultas-actas";
 import { BotonEnlace } from "@/components/boton-enlace";
 import { BotonImprimir } from "@/components/boton-imprimir";
+import { AvisoFormato } from "@/components/actas/aviso-formato";
 import { FormatoActa } from "@/components/actas/formato-acta";
 import { Badge } from "@/components/ui/badge";
 import { NOMBRES_ACTA } from "@/lib/actas";
@@ -68,6 +69,8 @@ export default async function PaginaActa({ params, searchParams }: PageProps<"/a
             <BotonImprimir />
           </div>
         </div>
+
+        {!anterior && !actaConFormatoVigente(acta) && <AvisoFormato actaId={acta.id} />}
 
         {acta.equipos.length > 0 && (
           <p className="flex flex-wrap items-center gap-2 text-sm">

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import {
+  aplicarFormatoVigente,
   crearActa,
   crearActaDeBaja,
   crearActaDeEgreso,
@@ -109,6 +110,15 @@ export async function editarActaAccion(id: number, formulario: FormData): Promis
 
   return intentar(() => {
     editarActa(db, { ...envio.acta, id, fotos: cambio });
+    return { id };
+  });
+}
+
+/** Pone en el acta el encabezado y pie de la configuración vigente (queda una versión). */
+export async function aplicarFormatoVigenteAccion(id: number): Promise<ResultadoActa> {
+  if (!Number.isInteger(id) || id <= 0) return { ok: false, error: "El acta no existe" };
+  return intentar(() => {
+    aplicarFormatoVigente(db, id);
     return { id };
   });
 }
