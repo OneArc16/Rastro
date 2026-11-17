@@ -1,7 +1,6 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element -- vista previa local de la foto elegida */
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, type FieldValues } from "react-hook-form";
 import { toast } from "sonner";
@@ -18,11 +17,13 @@ import { reducirFoto } from "@/lib/foto";
 import { primerErrorZod } from "@/lib/validacion/comunes";
 import {
   esquemaEnvioActa,
+  MAXIMO_FOTOS,
   type DatosBaja,
   type DatosEgreso,
   type DatosEntrega,
   type FormatoImpreso,
 } from "@/lib/validacion/actas";
+import { AdjuntoFotos, type FotoAdjunta } from "./adjunto-fotos";
 import { Seccion } from "./campos";
 import { SeccionesBaja, SeccionesEgreso, SeccionesEntrega } from "./secciones";
 
@@ -47,7 +48,8 @@ type Props = {
   /** Equipos que se pueden mostrar o elegir (en egreso se pueden agregar y quitar). */
   equipos: EquipoElegible[];
   ubicaciones?: { id: number; nombre: string }[];
-  fotoActualUrl?: string;
+  /** Fotos ya guardadas del acta (al editar una baja). */
+  fotosGuardadas?: { id: number; url: string }[];
 };
 
 /** Fecha principal del acta: la que trae su formato. */
@@ -75,7 +77,7 @@ export function FormularioActa({
   inicial,
   equipos,
   ubicaciones = [],
-  fotoActualUrl,
+  fotosGuardadas = [],
 }: Props) {
   const router = useRouter();
   const [enviando, iniciarEnvio] = useTransition();
@@ -89,33 +91,50 @@ export function FormularioActa({
     inicial.ubicacionId ? String(inicial.ubicacionId) : "",
   );
   const [trasladar, setTrasladar] = useState(false);
-  const [foto, setFoto] = useState<Blob | null>(null);
-  const [quitarFoto, setQuitarFoto] = useState(false);
+  const [fotos, setFotos] = useState<FotoAdjunta[]>(() =>
+    fotosGuardadas.map((f) => ({ clave: `g${f.id}`, url: f.url, guardadaId: f.id })),
+  );
   const [procesandoFoto, setProcesandoFoto] = useState(false);
 
-  const vistaPrevia = useMemo(() => (foto ? URL.createObjectURL(foto) : null), [foto]);
+  // Vistas previas locales creadas con createObjectURL: se liberan al salir
+  const urlsLocales = useRef(new Set<string>());
   useEffect(() => {
-    return () => {
-      if (vistaPrevia) URL.revokeObjectURL(vistaPrevia);
-    };
-  }, [vistaPrevia]);
+    const urls = urlsLocales.current;
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, []);
 
   const elegidos = equipos.filter((e) => activoIds.includes(e.id));
   const disponibles = equipos.filter((e) => !activoIds.includes(e.id));
   const datos = watch("datos");
 
-  async function alElegirFoto(archivo: File | undefined) {
-    if (!archivo) return;
+  async function alElegirFotos(archivos: File[]) {
+    const lugares = MAXIMO_FOTOS - fotos.length;
+    const elegidas = archivos.slice(0, Math.max(0, lugares));
+    if (elegidas.length === 0) return;
     setProcesandoFoto(true);
+    setError(null);
     try {
-      setFoto(await reducirFoto(archivo));
-      setQuitarFoto(false);
-      setError(null);
+      const nuevas: FotoAdjunta[] = [];
+      for (const archivo of elegidas) {
+        const blob = await reducirFoto(archivo);
+        const url = URL.createObjectURL(blob);
+        urlsLocales.current.add(url);
+        nuevas.push({ clave: url, url, blob });
+      }
+      setFotos((actuales) => [...actuales, ...nuevas]);
+      if (archivos.length > elegidas.length) {
+        setError(`Se agregaron ${elegidas.length}: el acta admite como máximo ${MAXIMO_FOTOS} fotos.`);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo procesar la foto");
     } finally {
       setProcesandoFoto(false);
     }
+  }
+
+  function quitarFoto(clave: string) {
+    setFotos((actuales) => actuales.filter((f) => f.clave !== clave));
+    if (urlsLocales.current.delete(clave)) URL.revokeObjectURL(clave);
   }
 
   /** Rehace la tabla de dispositivos del egreso con los equipos elegidos. */
@@ -150,7 +169,10 @@ export function FormularioActa({
         datos: contenido,
       },
       trasladar: modo === "crear" && tipo === "egreso" && trasladar,
-      quitarFoto,
+      fotosConservadas:
+        modo === "editar" && tipo === "baja"
+          ? fotos.flatMap((f) => (f.guardadaId ? [f.guardadaId] : []))
+          : undefined,
     });
     if (!envio.success) {
       setError(primerErrorZod(envio.error));
@@ -159,7 +181,9 @@ export function FormularioActa({
 
     const formulario = new FormData();
     formulario.set("envio", JSON.stringify(envio.data));
-    if (foto) formulario.set("foto", foto, "foto.jpg");
+    fotos.forEach((f, i) => {
+      if (f.blob) formulario.append("fotos", f.blob, `foto-${i + 1}.jpg`);
+    });
 
     iniciarEnvio(async () => {
       const resultado =
@@ -265,37 +289,14 @@ export function FormularioActa({
       {tipo === "baja" && (
         <>
           <SeccionesBaja register={register} watch={watch} />
-          <Seccion titulo="Foto del equipo">
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="block text-sm"
-              disabled={procesandoFoto}
-              onChange={(e) => alElegirFoto(e.target.files?.[0])}
+          <Seccion titulo="Fotos del equipo">
+            <AdjuntoFotos
+              fotos={fotos}
+              maximo={MAXIMO_FOTOS}
+              procesando={procesandoFoto}
+              alElegir={alElegirFotos}
+              alQuitar={quitarFoto}
             />
-            {procesandoFoto && <p className="text-sm text-muted-foreground">Reduciendo foto…</p>}
-            {vistaPrevia ? (
-              <img src={vistaPrevia} alt="Foto elegida" className="max-h-56 rounded-lg border" />
-            ) : (
-              fotoActualUrl &&
-              !quitarFoto && (
-                <img src={fotoActualUrl} alt="Foto guardada" className="max-h-56 rounded-lg border" />
-              )
-            )}
-            {(foto || (fotoActualUrl && !quitarFoto)) && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setFoto(null);
-                  if (fotoActualUrl) setQuitarFoto(true);
-                }}
-              >
-                Quitar foto
-              </Button>
-            )}
           </Seccion>
         </>
       )}

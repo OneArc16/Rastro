@@ -12,11 +12,11 @@ import { ActaEntregaFormato } from "./formato/acta-entrega";
 export function FormatoActa({
   tipo,
   datos,
-  fotoUrl,
+  fotoUrls = [],
 }: {
   tipo: TipoActa;
   datos: Record<string, unknown>;
-  fotoUrl?: string;
+  fotoUrls?: string[];
 }) {
   // El contenido ya se validó al guardar; parsear completa valores por defecto
   switch (tipo) {
@@ -25,6 +25,6 @@ export function FormatoActa({
     case "egreso":
       return <ActaEgresoFormato datos={esquemaDatosEgreso.parse(datos)} />;
     case "baja":
-      return <ActaBajaFormato datos={esquemaDatosBaja.parse(datos)} fotoUrl={fotoUrl} />;
+      return <ActaBajaFormato datos={esquemaDatosBaja.parse(datos)} fotoUrls={fotoUrls} />;
   }
 }

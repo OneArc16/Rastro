@@ -178,6 +178,9 @@ export const TIPOS_FOTO = ["image/jpeg", "image/png", "image/webp"] as const;
  */
 export const MAXIMO_BYTES_FOTO = 800 * 1024;
 
+/** Fotos que admite un acta de baja. */
+export const MAXIMO_FOTOS = 4;
+
 // ---------------------------------------------------------------------------
 // Datos comunes de crear y editar
 // ---------------------------------------------------------------------------
@@ -200,13 +203,16 @@ export const esquemaActa = z.discriminatedUnion("tipo", [
 
 export type EntradaActa = z.output<typeof esquemaActa>;
 
-/** Lo que envía el formulario de un acta (la foto viaja aparte en el FormData). */
+/** Lo que envía el formulario de un acta (las fotos viajan aparte en el FormData). */
 export const esquemaEnvioActa = z.object({
   acta: esquemaActa,
   /** Solo egreso al crear: dejar los equipos en la ubicación de destino. */
   trasladar: z.boolean().default(false),
-  /** Solo al editar: quitar la foto guardada. */
-  quitarFoto: z.boolean().default(false),
+  /**
+   * Solo al editar: ids de las fotos guardadas que se conservan, en orden.
+   * Sin este campo se conservan todas.
+   */
+  fotosConservadas: z.array(idPositivo("Foto inválida")).max(MAXIMO_FOTOS).optional(),
 });
 
 export { TIPOS_ACTA };

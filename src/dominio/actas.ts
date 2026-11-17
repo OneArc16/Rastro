@@ -3,11 +3,12 @@
  * Un acta guarda la copia fija de lo que se imprime; se puede editar, y cada
  * edición conserva la versión anterior para que el historial sea confiable.
  */
-import { and, eq, inArray, max } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, max, sql } from "drizzle-orm";
 import type { Db } from "@/db";
 import {
   actas,
   actasActivos,
+  actasFotos,
   actasVersiones,
   activos,
   formatosActa,
@@ -18,6 +19,7 @@ import {
 import {
   ESQUEMA_DATOS_POR_TIPO,
   MAXIMO_BYTES_FOTO,
+  MAXIMO_FOTOS,
   TIPOS_FOTO,
   type FormatoImpreso,
 } from "@/lib/validacion/actas";
@@ -26,6 +28,12 @@ import { ErrorDeNegocio, validarFecha } from "./comunes";
 
 
 export type Foto = { contenido: Buffer; tipo: string };
+
+/**
+ * Cambio de fotos al editar: ids de las vigentes que se conservan, en orden
+ * (sin la lista se conservan todas), y las nuevas, que van al final.
+ */
+export type CambioFotos = { conservar?: number[]; nuevas: Foto[] };
 
 export type DatosActa = {
   tipo: TipoActa;
@@ -169,6 +177,53 @@ function validarFoto(foto: Foto) {
   }
 }
 
+function validarCantidadFotos(cantidad: number) {
+  if (cantidad > MAXIMO_FOTOS) {
+    throw new ErrorDeNegocio(`El acta admite como máximo ${MAXIMO_FOTOS} fotos`);
+  }
+}
+
+function agregarFotos(tx: Tx, actaId: number, fotos: Foto[], desdeOrden: number) {
+  if (fotos.length === 0) return;
+  tx.insert(actasFotos)
+    .values(
+      fotos.map((foto, i) => ({
+        actaId,
+        orden: desdeOrden + i,
+        contenido: foto.contenido,
+        tipo: foto.tipo,
+      })),
+    )
+    .run();
+}
+
+/**
+ * Deja como fotos vigentes las conservadas (en el orden pedido) seguidas de
+ * las nuevas. Las conservadas deben ser fotos vigentes de esta acta.
+ */
+function cambiarFotos(tx: Tx, actaId: number, cambio: CambioFotos) {
+  const vigentes = tx
+    .select({ id: actasFotos.id })
+    .from(actasFotos)
+    .where(and(eq(actasFotos.actaId, actaId), isNull(actasFotos.versionId)))
+    .orderBy(asc(actasFotos.orden))
+    .all()
+    .map((f) => f.id);
+  const conservar = cambio.conservar === undefined ? vigentes : [...new Set(cambio.conservar)];
+  if (conservar.some((id) => !vigentes.includes(id))) {
+    throw new ErrorDeNegocio("Una de las fotos no pertenece al acta");
+  }
+  validarCantidadFotos(conservar.length + cambio.nuevas.length);
+  cambio.nuevas.forEach(validarFoto);
+
+  const quitar = vigentes.filter((id) => !conservar.includes(id));
+  if (quitar.length > 0) tx.delete(actasFotos).where(inArray(actasFotos.id, quitar)).run();
+  conservar.forEach((id, i) =>
+    tx.update(actasFotos).set({ orden: i + 1 }).where(eq(actasFotos.id, id)).run(),
+  );
+  agregarFotos(tx, actaId, cambio.nuevas, conservar.length + 1);
+}
+
 function guardarEquipos(tx: Tx, actaId: number, activoIds: number[]) {
   tx.delete(actasActivos).where(eq(actasActivos.actaId, actaId)).run();
   if (activoIds.length === 0) return;
@@ -185,10 +240,12 @@ function guardarEquipos(tx: Tx, actaId: number, activoIds: number[]) {
  * Crea el acta dentro de una transacción ya abierta, para que otras
  * operaciones (dar de baja, trasladar) queden en el mismo todo o nada.
  */
-function crearActaEn(tx: Tx, datos: DatosActa & { foto?: Foto }) {
+function crearActaEn(tx: Tx, datos: DatosActa & { fotos?: Foto[] }) {
   const contenido = validarContenido(datos.tipo, datos.datos);
   const activoIds = validarReferencias(tx, datos);
-  if (datos.foto) validarFoto(datos.foto);
+  const fotos = datos.fotos ?? [];
+  validarCantidadFotos(fotos.length);
+  fotos.forEach(validarFoto);
 
   const ultimo = tx
     .select({ numero: max(actas.numero) })
@@ -206,12 +263,11 @@ function crearActaEn(tx: Tx, datos: DatosActa & { foto?: Foto }) {
       funcionarioId: datos.funcionarioId ?? null,
       ubicacionId: datos.ubicacionId ?? null,
       datos: contenido,
-      foto: datos.foto?.contenido ?? null,
-      fotoTipo: datos.foto?.tipo ?? null,
     })
     .returning({ id: actas.id })
     .get();
   guardarEquipos(tx, id, activoIds);
+  agregarFotos(tx, id, fotos, 1);
 
   return { id, codigo: codigoActa(datos.tipo, numero) };
 }
@@ -220,18 +276,19 @@ function crearActaEn(tx: Tx, datos: DatosActa & { foto?: Foto }) {
  * Acta de entrega: no cambia asignaciones. La baja y el egreso se crean con
  * crearActaDeBaja y crearActaDeEgreso, que también cambian los equipos.
  */
-export function crearActa(db: Db, datos: DatosActa & { tipo: "entrega"; foto?: Foto }) {
+export function crearActa(db: Db, datos: DatosActa & { tipo: "entrega"; fotos?: Foto[] }) {
   return db.transaction((tx) => crearActaEn(tx, datos));
 }
 
 /**
  * Reemplaza el contenido del acta y guarda el anterior como versión.
  * Es una corrección del documento: no vuelve a trasladar equipos.
- * foto: undefined la conserva, null la quita, un valor la reemplaza.
+ * fotos: undefined las conserva todas; un CambioFotos deja las conservadas y
+ * agrega las nuevas. Las fotos anteriores quedan copiadas en la versión.
  */
 export function editarActa(
   db: Db,
-  datos: Omit<DatosActa, "tipo"> & { id: number; tipo?: TipoActa; foto?: Foto | null },
+  datos: Omit<DatosActa, "tipo"> & { id: number; tipo?: TipoActa; fotos?: CambioFotos },
 ) {
   db.transaction((tx) => {
     const actual = tx.select().from(actas).where(eq(actas.id, datos.id)).get();
@@ -241,7 +298,6 @@ export function editarActa(
     }
     const contenido = validarContenido(actual.tipo, datos.datos);
     const activoIds = validarReferencias(tx, { ...datos, tipo: actual.tipo });
-    if (datos.foto) validarFoto(datos.foto);
 
     const equiposAnteriores = tx
       .select({ activoId: actasActivos.activoId })
@@ -259,7 +315,8 @@ export function editarActa(
     }
 
     const ahora = new Date();
-    tx.insert(actasVersiones)
+    const version = tx
+      .insert(actasVersiones)
       .values({
         actaId: actual.id,
         fecha: actual.fecha,
@@ -267,16 +324,18 @@ export function editarActa(
         ubicacionId: actual.ubicacionId,
         activoIds: equiposAnteriores,
         datos: actual.datos,
-        foto: actual.foto,
-        fotoTipo: actual.fotoTipo,
         reemplazadaEn: ahora,
       })
-      .run();
+      .returning({ id: actasVersiones.id })
+      .get();
+    // La versión guarda su propia copia de las fotos vigentes en este momento
+    tx.run(sql`
+      insert into ${actasFotos} (acta_id, version_id, orden, contenido, tipo)
+      select acta_id, ${version.id}, orden, contenido, tipo from ${actasFotos}
+      where acta_id = ${actual.id} and version_id is null
+      order by orden`);
 
-    const foto =
-      datos.foto === undefined
-        ? {}
-        : { foto: datos.foto?.contenido ?? null, fotoTipo: datos.foto?.tipo ?? null };
+    if (datos.fotos) cambiarFotos(tx, actual.id, datos.fotos);
     tx.update(actas)
       .set({
         fecha: datos.fecha,
@@ -284,7 +343,6 @@ export function editarActa(
         ubicacionId: datos.ubicacionId ?? null,
         datos: contenido,
         editadaEn: ahora,
-        ...foto,
       })
       .where(eq(actas.id, actual.id))
       .run();
@@ -299,7 +357,7 @@ export function editarActa(
 /** Guarda el acta de baja y da de baja el equipo, si aún no lo está. */
 export function crearActaDeBaja(
   db: Db,
-  datos: Omit<DatosActa, "tipo" | "activoIds"> & { activoId: number; foto?: Foto },
+  datos: Omit<DatosActa, "tipo" | "activoIds"> & { activoId: number; fotos?: Foto[] },
 ) {
   return db.transaction((tx) => {
     const acta = crearActaEn(tx, { ...datos, tipo: "baja", activoIds: [datos.activoId] });

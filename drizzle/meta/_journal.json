@@ -15,6 +15,13 @@
       "when": 1794844668422,
       "tag": "0001_giant_earthquake",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794933371640,
+      "tag": "0002_solid_wither",
+      "breakpoints": true
     }
   ]
 }

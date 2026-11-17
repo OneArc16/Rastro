@@ -22,6 +22,13 @@ const nextConfig: NextConfig = {
   // Servidor autónomo en .next/standalone, el que usa la imagen de Docker.
   output: "standalone",
   allowedDevOrigins: hostsDeDesarrollo(process.env.APP_BASE_URL),
+  experimental: {
+    serverActions: {
+      // Hasta 4 fotos de 800 KB en un acta de baja, más el JSON del acta y
+      // el margen del multipart (el valor por defecto es 1 MB).
+      bodySizeLimit: "4mb",
+    },
+  },
   turbopack: {
     rules: {
       "*.css": {

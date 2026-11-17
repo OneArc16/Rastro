@@ -141,12 +141,23 @@
   font-size: 8pt;
 }
 
+.ac-fotos {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: 4pt;
+  margin-top: 2pt;
+}
+
 .ac-foto {
   display: block;
   max-width: 2.6in;
   max-height: 2.2in;
-  margin-top: 2pt;
   object-fit: contain;
+}
+
+/* Con varias fotos (hasta 4, en 2x2) se achican para no pasar de página */
+.ac-fotos--varias .ac-foto {
+  max-height: 1.7in;
 }
 
 /* Firmas en línea de la baja */

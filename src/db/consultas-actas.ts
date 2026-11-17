@@ -10,6 +10,7 @@ import { db } from "./index";
 import {
   actas,
   actasActivos,
+  actasFotos,
   actasVersiones,
   activos,
   asignaciones,
@@ -17,7 +18,26 @@ import {
   ubicaciones,
 } from "./schema";
 
-/** Acta con sus equipos y sus versiones anteriores (sin fotos). */
+/**
+ * Ids de las fotos de un acta, en orden, agrupados por versión
+ * (la clave "vigente" son las del acta actual).
+ */
+function idsDeFotos(actaId: number) {
+  const filas = db
+    .select({ id: actasFotos.id, versionId: actasFotos.versionId })
+    .from(actasFotos)
+    .where(eq(actasFotos.actaId, actaId))
+    .orderBy(asc(actasFotos.orden), asc(actasFotos.id))
+    .all();
+  const porVersion = new Map<number | "vigente", number[]>();
+  for (const { id, versionId } of filas) {
+    const clave = versionId ?? "vigente";
+    porVersion.set(clave, [...(porVersion.get(clave) ?? []), id]);
+  }
+  return porVersion;
+}
+
+/** Acta con sus equipos y sus versiones anteriores (las fotos, solo por id). */
 export function obtenerActa(id: number) {
   const acta = db
     .select({
@@ -28,7 +48,6 @@ export function obtenerActa(id: number) {
       funcionarioId: actas.funcionarioId,
       ubicacionId: actas.ubicacionId,
       datos: actas.datos,
-      tieneFoto: actas.fotoTipo,
       creadaEn: actas.creadaEn,
       editadaEn: actas.editadaEn,
     })
@@ -50,7 +69,6 @@ export function obtenerActa(id: number) {
       id: actasVersiones.id,
       fecha: actasVersiones.fecha,
       datos: actasVersiones.datos,
-      tieneFoto: actasVersiones.fotoTipo,
       reemplazadaEn: actasVersiones.reemplazadaEn,
     })
     .from(actasVersiones)
@@ -58,38 +76,27 @@ export function obtenerActa(id: number) {
     .orderBy(asc(actasVersiones.id))
     .all();
 
+  const fotos = idsDeFotos(id);
   return {
     ...acta,
-    tieneFoto: acta.tieneFoto !== null,
+    fotoIds: fotos.get("vigente") ?? [],
     codigo: codigoActa(acta.tipo, acta.numero),
     equipos,
-    versiones: versiones.map((v) => ({ ...v, tieneFoto: v.tieneFoto !== null })),
+    versiones: versiones.map((v) => ({ ...v, fotoIds: fotos.get(v.id) ?? [] })),
   };
 }
 
 export type ActaCompleta = NonNullable<ReturnType<typeof obtenerActa>>;
 
-/** Foto del acta o de una de sus versiones anteriores. */
-export function obtenerFotoActa(actaId: number, versionId?: number) {
-  if (versionId === undefined) {
-    const fila = db
-      .select({ contenido: actas.foto, tipo: actas.fotoTipo })
-      .from(actas)
-      .where(eq(actas.id, actaId))
-      .get();
-    return fila?.contenido && fila.tipo ? { contenido: fila.contenido, tipo: fila.tipo } : null;
-  }
-  const fila = db
-    .select({
-      actaId: actasVersiones.actaId,
-      contenido: actasVersiones.foto,
-      tipo: actasVersiones.fotoTipo,
-    })
-    .from(actasVersiones)
-    .where(eq(actasVersiones.id, versionId))
-    .get();
-  if (!fila || fila.actaId !== actaId || !fila.contenido || !fila.tipo) return null;
-  return { contenido: fila.contenido, tipo: fila.tipo };
+/** Una foto del acta (vigente o de una versión anterior), si pertenece a esa acta. */
+export function obtenerFotoActa(actaId: number, fotoId: number) {
+  return (
+    db
+      .select({ contenido: actasFotos.contenido, tipo: actasFotos.tipo })
+      .from(actasFotos)
+      .where(and(eq(actasFotos.id, fotoId), eq(actasFotos.actaId, actaId)))
+      .get() ?? null
+  );
 }
 
 // ---------------------------------------------------------------------------

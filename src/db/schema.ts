@@ -217,8 +217,6 @@ export const actas = sqliteTable(
     funcionarioId: integer("funcionario_id").references(() => funcionarios.id),
     ubicacionId: integer("ubicacion_id").references(() => ubicaciones.id),
     datos: text("datos", { mode: "json" }).notNull().$type<Record<string, unknown>>(),
-    foto: blob("foto", { mode: "buffer" }),
-    fotoTipo: text("foto_tipo"), // "image/jpeg"
     creadaEn: integer("creada_en", { mode: "timestamp" })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -261,12 +259,27 @@ export const actasVersiones = sqliteTable(
     ubicacionId: integer("ubicacion_id"),
     activoIds: text("activo_ids", { mode: "json" }).notNull().$type<number[]>(),
     datos: text("datos", { mode: "json" }).notNull().$type<Record<string, unknown>>(),
-    foto: blob("foto", { mode: "buffer" }),
-    fotoTipo: text("foto_tipo"),
     // Cuándo dejó de ser la versión vigente
     reemplazadaEn: integer("reemplazada_en", { mode: "timestamp" }).notNull(),
   },
   (t) => [index("actas_versiones_acta_idx").on(t.actaId)],
+);
+
+// Fotos del acta de baja (hasta MAXIMO_FOTOS). Sin versión: las del acta
+// vigente; con versión: las que tenía esa versión anterior.
+export const actasFotos = sqliteTable(
+  "actas_fotos",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    actaId: integer("acta_id")
+      .notNull()
+      .references(() => actas.id),
+    versionId: integer("version_id").references(() => actasVersiones.id),
+    orden: integer("orden").notNull(),
+    contenido: blob("contenido", { mode: "buffer" }).notNull(),
+    tipo: text("tipo").notNull(), // "image/jpeg"
+  },
+  (t) => [index("actas_fotos_acta_idx").on(t.actaId, t.versionId)],
 );
 
 // ---------------------------------------------------------------------------

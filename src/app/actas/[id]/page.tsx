@@ -40,9 +40,7 @@ export default async function PaginaActa({ params, searchParams }: PageProps<"/a
   if (versionId !== null && !anterior) notFound();
 
   const mostrada = anterior ?? acta;
-  const fotoUrl = mostrada.tieneFoto
-    ? `/actas/${acta.id}/foto${anterior ? `?version=${anterior.id}` : ""}`
-    : undefined;
+  const fotoUrls = mostrada.fotoIds.map((fotoId) => `/actas/${acta.id}/fotos/${fotoId}`);
 
   return (
     <div className="space-y-4">
@@ -113,7 +111,7 @@ export default async function PaginaActa({ params, searchParams }: PageProps<"/a
         )}
       </div>
 
-      <FormatoActa tipo={acta.tipo} datos={mostrada.datos} fotoUrl={fotoUrl} />
+      <FormatoActa tipo={acta.tipo} datos={mostrada.datos} fotoUrls={fotoUrls} />
     </div>
   );
 }

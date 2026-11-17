@@ -1,11 +1,12 @@
 import path from "node:path";
-import { eq, isNull } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
 import { conectar, type Db } from "@/db";
 import {
   actas,
   actasActivos,
+  actasFotos,
   actasVersiones,
   activos,
   asignaciones,
@@ -32,6 +33,36 @@ import { asignar, darDeBaja } from "./asignaciones";
 import { ErrorDeNegocio } from "./comunes";
 
 let db: Db;
+
+const JPEG = (n: number) => Buffer.from([0xff, 0xd8, 0xff, 0xe0, n]);
+const PNG = (n: number) => Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, n]);
+
+/** Fotos del acta vigente (versionId null) o de una versión, en orden. */
+function fotosDe(actaId: number, versionId: number | null = null) {
+  return db
+    .select({ contenido: actasFotos.contenido, tipo: actasFotos.tipo, orden: actasFotos.orden })
+    .from(actasFotos)
+    .where(
+      and(
+        eq(actasFotos.actaId, actaId),
+        versionId === null ? isNull(actasFotos.versionId) : eq(actasFotos.versionId, versionId),
+      ),
+    )
+    .orderBy(asc(actasFotos.orden))
+    .all()
+    .map((f) => ({ ...f, contenido: [...f.contenido] }));
+}
+
+/** Ids de las fotos vigentes del acta, en orden. */
+function idsFotos(actaId: number) {
+  return db
+    .select({ id: actasFotos.id })
+    .from(actasFotos)
+    .where(and(eq(actasFotos.actaId, actaId), isNull(actasFotos.versionId)))
+    .orderBy(asc(actasFotos.orden))
+    .all()
+    .map((f) => f.id);
+}
 let funcionario: number;
 let pc: number;
 let monitor: number;
@@ -118,18 +149,35 @@ describe("crearActa", () => {
     expect(equipos).toEqual([pc, monitor].sort());
   });
 
-  it("guarda la foto con su tipo", () => {
-    const foto = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
+  it("guarda las fotos en orden con su tipo", () => {
     const { id } = crearActa(db, {
       tipo: "entrega",
       fecha: "2026-11-16",
       activoIds: [],
       datos: datosEntrega(),
-      foto: { contenido: foto, tipo: "image/jpeg" },
+      fotos: [
+        { contenido: JPEG(1), tipo: "image/jpeg" },
+        { contenido: PNG(2), tipo: "image/png" },
+      ],
     });
-    const guardada = db.select().from(actas).where(eq(actas.id, id)).get();
-    expect(guardada?.foto?.equals(foto)).toBe(true);
-    expect(guardada?.fotoTipo).toBe("image/jpeg");
+    expect(fotosDe(id)).toEqual([
+      { contenido: [...JPEG(1)], tipo: "image/jpeg", orden: 1 },
+      { contenido: [...PNG(2)], tipo: "image/png", orden: 2 },
+    ]);
+  });
+
+  it("rechaza más de 4 fotos sin guardar el acta", () => {
+    expect(() =>
+      crearActa(db, {
+        tipo: "entrega",
+        fecha: "2026-11-16",
+        activoIds: [],
+        datos: datosEntrega(),
+        fotos: [1, 2, 3, 4, 5].map((n) => ({ contenido: JPEG(n), tipo: "image/jpeg" })),
+      }),
+    ).toThrow(new ErrorDeNegocio("El acta admite como máximo 4 fotos"));
+    expect(db.select().from(actas).all()).toHaveLength(0);
+    expect(db.select().from(actasFotos).all()).toHaveLength(0);
   });
 
   it("rechaza equipos o funcionarios que no existen sin guardar nada", () => {
@@ -162,15 +210,18 @@ describe("crearActa", () => {
 
 describe("editarActa", () => {
   it("guarda la versión anterior completa y marca el acta como editada", () => {
-    const foto = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1]);
     const { id } = crearActa(db, {
       tipo: "entrega",
       fecha: "2026-11-16",
       funcionarioId: funcionario,
       activoIds: [pc],
       datos: datosEntrega("primera"),
-      foto: { contenido: foto, tipo: "image/png" },
+      fotos: [
+        { contenido: PNG(1), tipo: "image/png" },
+        { contenido: JPEG(2), tipo: "image/jpeg" },
+      ],
     });
+    const antes = fotosDe(id);
 
     editarActa(db, {
       id,
@@ -185,8 +236,8 @@ describe("editarActa", () => {
     expect(acta?.datos).toEqual(datosEntrega("corregida"));
     expect(acta?.numero).toBe(1);
     expect(acta?.editadaEn).toBeInstanceOf(Date);
-    // Sin "foto" en la edición, la foto se conserva
-    expect(acta?.foto?.equals(foto)).toBe(true);
+    // Sin "fotos" en la edición, las fotos se conservan
+    expect(fotosDe(id)).toEqual(antes);
 
     const equipos = db.select().from(actasActivos).where(eq(actasActivos.actaId, id)).all();
     expect(equipos.map((e) => e.activoId)).toEqual([monitor]);
@@ -202,31 +253,53 @@ describe("editarActa", () => {
       funcionarioId: funcionario,
       activoIds: [pc],
       datos: datosEntrega("primera"),
-      fotoTipo: "image/png",
     });
-    expect(versiones[0].foto?.equals(foto)).toBe(true);
+    expect(fotosDe(id, versiones[0].id)).toEqual(antes);
   });
 
-  it("cada edición agrega una versión y puede quitar la foto", () => {
+  it("cada edición agrega una versión y puede quitar y agregar fotos", () => {
     const { id } = crearActa(db, {
       tipo: "entrega",
       fecha: "2026-11-16",
       activoIds: [],
       datos: datosEntrega("v1"),
-      foto: { contenido: Buffer.from([0xff, 0xd8, 0xff, 1]), tipo: "image/jpeg" },
+      fotos: [1, 2, 3].map((n) => ({ contenido: JPEG(n), tipo: "image/jpeg" })),
     });
     editarActa(db, { id, fecha: "2026-11-16", activoIds: [], datos: datosEntrega("v2") });
+    const [primera, , tercera] = idsFotos(id);
+    // Conserva la 3.ª y la 1.ª (en ese orden) y agrega una nueva al final
     editarActa(db, {
       id,
       fecha: "2026-11-16",
       activoIds: [],
       datos: datosEntrega("v3"),
-      foto: null,
+      fotos: { conservar: [tercera, primera], nuevas: [{ contenido: PNG(9), tipo: "image/png" }] },
     });
 
-    const acta = db.select().from(actas).where(eq(actas.id, id)).get();
-    expect(acta?.foto).toBeNull();
-    expect(acta?.fotoTipo).toBeNull();
+    expect(fotosDe(id)).toEqual([
+      { contenido: [...JPEG(3)], tipo: "image/jpeg", orden: 1 },
+      { contenido: [...JPEG(1)], tipo: "image/jpeg", orden: 2 },
+      { contenido: [...PNG(9)], tipo: "image/png", orden: 3 },
+    ]);
+    const ultimaVersion = db
+      .select()
+      .from(actasVersiones)
+      .where(eq(actasVersiones.actaId, id))
+      .orderBy(actasVersiones.id)
+      .all()
+      .at(-1)!;
+    expect(fotosDe(id, ultimaVersion.id).map((f) => f.contenido)).toEqual(
+      [1, 2, 3].map((n) => [...JPEG(n)]),
+    );
+
+    editarActa(db, {
+      id,
+      fecha: "2026-11-16",
+      activoIds: [],
+      datos: datosEntrega("v4"),
+      fotos: { conservar: [], nuevas: [] },
+    });
+    expect(fotosDe(id)).toEqual([]);
     const observaciones = db
       .select()
       .from(actasVersiones)
@@ -234,7 +307,58 @@ describe("editarActa", () => {
       .orderBy(actasVersiones.id)
       .all()
       .map((v) => (v.datos as { observacion: string }).observacion);
-    expect(observaciones).toEqual(["v1", "v2"]);
+    expect(observaciones).toEqual(["v1", "v2", "v3"]);
+  });
+
+  it("sin lista de conservadas agrega las nuevas al final y conserva las guardadas", () => {
+    const { id } = crearActa(db, {
+      tipo: "entrega",
+      fecha: "2026-11-16",
+      activoIds: [],
+      datos: datosEntrega(),
+      fotos: [{ contenido: JPEG(1), tipo: "image/jpeg" }],
+    });
+    editarActa(db, {
+      id,
+      fecha: "2026-11-16",
+      activoIds: [],
+      datos: datosEntrega("otra"),
+      fotos: { nuevas: [{ contenido: PNG(2), tipo: "image/png" }] },
+    });
+    expect(fotosDe(id).map((f) => f.contenido)).toEqual([[...JPEG(1)], [...PNG(2)]]);
+  });
+
+  it("rechaza pasar de 4 fotos o conservar una foto de otra acta, sin cambiar nada", () => {
+    const crearCon = (n: number) =>
+      crearActa(db, {
+        tipo: "entrega",
+        fecha: "2026-11-16",
+        activoIds: [],
+        datos: datosEntrega(),
+        fotos: Array.from({ length: n }, (_, i) => ({ contenido: JPEG(i), tipo: "image/jpeg" })),
+      }).id;
+    const id = crearCon(3);
+    const otra = crearCon(1);
+    const editar = (conservar: number[], nuevas: number) =>
+      editarActa(db, {
+        id,
+        fecha: "2026-11-16",
+        activoIds: [],
+        datos: datosEntrega("cambio"),
+        fotos: {
+          conservar,
+          nuevas: Array.from({ length: nuevas }, () => ({ contenido: PNG(7), tipo: "image/png" })),
+        },
+      });
+
+    expect(() => editar(idsFotos(id), 2)).toThrow(
+      new ErrorDeNegocio("El acta admite como máximo 4 fotos"),
+    );
+    expect(() => editar([idsFotos(otra)[0]], 0)).toThrow(
+      new ErrorDeNegocio("Una de las fotos no pertenece al acta"),
+    );
+    expect(fotosDe(id)).toHaveLength(3);
+    expect(db.select().from(actasVersiones).all()).toHaveLength(0);
   });
 
   it("no permite cambiar el tipo de un acta ni editar una que no existe", () => {
@@ -504,7 +628,7 @@ describe("protecciones del historial", () => {
         fecha: "2026-11-16",
         activoIds: [],
         datos: datosEntrega(),
-        foto: { contenido, tipo },
+        fotos: [{ contenido, tipo }],
       });
 
     expect(() => crear(jpeg, "image/gif")).toThrow(

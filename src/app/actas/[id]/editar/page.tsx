@@ -42,7 +42,10 @@ export default async function PaginaEditarActa({ params }: PageProps<"/actas/[id
         }}
         equipos={equipos}
         ubicaciones={acta.tipo === "egreso" ? listarUbicacionesSimple() : []}
-        fotoActualUrl={acta.tieneFoto ? `/actas/${acta.id}/foto` : undefined}
+        fotosGuardadas={acta.fotoIds.map((fotoId) => ({
+          id: fotoId,
+          url: `/actas/${acta.id}/fotos/${fotoId}`,
+        }))}
       />
     </div>
   );

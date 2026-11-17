@@ -107,7 +107,7 @@ function CasillasFecha({ fecha, gris = false }: { fecha: string; gris?: boolean 
 }
 
 /** Acta de baja FCOM-01 con el diseño del formato aprobado. */
-export function ActaBajaFormato({ datos, fotoUrl }: { datos: DatosBaja; fotoUrl?: string }) {
+export function ActaBajaFormato({ datos, fotoUrls = [] }: { datos: DatosBaja; fotoUrls?: string[] }) {
   const r = datos.responsable;
   const e = datos.equipo;
   const marcadas = new Set<string>(datos.calificaciones);
@@ -208,7 +208,13 @@ export function ActaBajaFormato({ datos, fotoUrl }: { datos: DatosBaja; fotoUrl?
             <tr style={{ height: "134pt" }}>
               <td className="ac-arriba">
                 <TextoLibre texto={datos.especificacion} />
-                {fotoUrl && <img src={fotoUrl} alt="Foto del equipo" className="ac-foto" />}
+                {fotoUrls.length > 0 && (
+                  <div className={fotoUrls.length > 1 ? "ac-fotos ac-fotos--varias" : "ac-fotos"}>
+                    {fotoUrls.map((url, i) => (
+                      <img key={url} src={url} alt={`Foto ${i + 1} del equipo`} className="ac-foto" />
+                    ))}
+                  </div>
+                )}
               </td>
             </tr>
           </tbody>

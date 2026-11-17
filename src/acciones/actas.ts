@@ -16,6 +16,7 @@ import {
   esquemaEnvioActa,
   esquemaFormatoActaFormulario,
   MAXIMO_BYTES_FOTO,
+  MAXIMO_FOTOS,
 } from "@/lib/validacion/actas";
 import { ejecutar } from "./ejecutar";
 import type { ResultadoAccion } from "./resultado";
@@ -28,7 +29,7 @@ export async function guardarFormatoActaAccion(datos: unknown): Promise<Resultad
   );
 }
 
-/** Lee el envío del formulario: el acta en JSON y la foto como archivo. */
+/** Lee el envío del formulario: el acta en JSON y las fotos como archivos ("fotos"). */
 async function leerEnvio(formulario: FormData) {
   let json: unknown;
   try {
@@ -39,16 +40,25 @@ async function leerEnvio(formulario: FormData) {
   const envio = esquemaEnvioActa.safeParse(json);
   if (!envio.success) return { ok: false, error: primerErrorZod(envio.error) } as const;
 
-  const archivo = formulario.get("foto");
-  let foto: Foto | undefined;
-  if (archivo instanceof File && archivo.size > 0) {
-    if (archivo.size > MAXIMO_BYTES_FOTO) return { ok: false, error: "La foto es demasiado grande" } as const;
-    foto = { contenido: Buffer.from(await archivo.arrayBuffer()), tipo: archivo.type };
+  const archivos = formulario
+    .getAll("fotos")
+    .filter((a): a is File => a instanceof File && a.size > 0);
+  if (archivos.length > MAXIMO_FOTOS) {
+    return { ok: false, error: `El acta admite como máximo ${MAXIMO_FOTOS} fotos` } as const;
   }
-  if (foto && envio.data.acta.tipo !== "baja") {
+  if (archivos.some((a) => a.size > MAXIMO_BYTES_FOTO)) {
+    return { ok: false, error: "La foto es demasiado grande" } as const;
+  }
+  if (
+    (archivos.length > 0 || envio.data.fotosConservadas?.length) &&
+    envio.data.acta.tipo !== "baja"
+  ) {
     return { ok: false, error: "Solo el acta de baja lleva foto" } as const;
   }
-  return { ok: true, envio: envio.data, foto } as const;
+  const fotos: Foto[] = await Promise.all(
+    archivos.map(async (a) => ({ contenido: Buffer.from(await a.arrayBuffer()), tipo: a.type })),
+  );
+  return { ok: true, envio: envio.data, fotos } as const;
 }
 
 /** Ejecuta la operación y traduce los errores de negocio para el formulario. */
@@ -66,13 +76,13 @@ function intentar(operacion: () => { id: number; codigo?: string }): ResultadoAc
 export async function crearActaAccion(formulario: FormData): Promise<ResultadoActa> {
   const leido = await leerEnvio(formulario);
   if (!leido.ok) return leido;
-  const { envio, foto } = leido;
+  const { envio, fotos } = leido;
   const { acta } = envio;
 
   return intentar(() => {
     switch (acta.tipo) {
       case "entrega":
-        return crearActa(db, { ...acta, foto });
+        return crearActa(db, { ...acta, fotos });
       case "egreso":
         return crearActaDeEgreso(db, { ...acta, trasladar: envio.trasladar });
       case "baja": {
@@ -80,7 +90,7 @@ export async function crearActaAccion(formulario: FormData): Promise<ResultadoAc
         if (activoId === undefined || otros.length > 0) {
           throw new ErrorDeNegocio("El acta de baja es de un solo equipo");
         }
-        return crearActaDeBaja(db, { ...acta, activoId, foto });
+        return crearActaDeBaja(db, { ...acta, activoId, fotos });
       }
     }
   });
@@ -90,10 +100,15 @@ export async function editarActaAccion(id: number, formulario: FormData): Promis
   if (!Number.isInteger(id) || id <= 0) return { ok: false, error: "El acta no existe" };
   const leido = await leerEnvio(formulario);
   if (!leido.ok) return leido;
-  const { envio, foto } = leido;
+  const { envio, fotos } = leido;
+  // Sin fotosConservadas ni fotos nuevas, las fotos guardadas no se tocan
+  const cambio =
+    envio.fotosConservadas === undefined && fotos.length === 0
+      ? undefined
+      : { conservar: envio.fotosConservadas, nuevas: fotos };
 
   return intentar(() => {
-    editarActa(db, { ...envio.acta, id, foto: foto ?? (envio.quitarFoto ? null : undefined) });
+    editarActa(db, { ...envio.acta, id, fotos: cambio });
     return { id };
   });
 }
