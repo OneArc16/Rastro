@@ -235,12 +235,13 @@ export function ActaBajaFormato({ datos, fotoUrls = [] }: { datos: DatosBaja; fo
 
         <div className="ac-lineasFirma">
           <div className="ac-lineaFirma">
-            <span className="ac-raya">{r.nombre}</span>
+            {/* Línea en blanco: aquí se firma a mano */}
+            <span className="ac-raya" />
             <span>RESPONSABLE</span>
           </div>
           <div className="ac-lineaFirma">
             <span style={{ display: "flex", fontWeight: 400 }}>
-              VoBo<span className="ac-raya" style={{ flex: 1 }}>{datos.jefeArea.nombre}</span>
+              VoBo<span className="ac-raya" style={{ flex: 1 }} />
             </span>
             <span style={{ paddingLeft: "0.4in" }}>JEFE DE ÁREA</span>
           </div>

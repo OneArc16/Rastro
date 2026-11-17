@@ -175,9 +175,10 @@
   min-width: 2.2in;
 }
 
+/* Líneas de firma de la baja: en blanco y con alto suficiente para firmar */
 .ac-lineaFirma .ac-raya {
   border-bottom: 0.75pt solid #000000;
-  min-height: 14pt;
+  min-height: 28pt;
   font-weight: 400;
   font-size: 8pt;
   text-align: center;
