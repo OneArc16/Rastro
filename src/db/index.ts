@@ -28,7 +28,13 @@ export type Db = ReturnType<typeof conectar>;
 // en globalThis para no abrir un archivo nuevo en cada recarga.
 const globalDb = globalThis as typeof globalThis & { __rastroDb?: Db };
 
-export const db: Db = globalDb.__rastroDb ?? conectar(RUTA_DB);
+// Durante next build ninguna página consulta datos (todas son dinámicas), pero
+// Next importa los módulos en varios procesos a la vez: abrir el archivo en
+// cada uno choca al pasarlo a WAL ("database is locked"). En el build basta
+// una base en memoria.
+const enBuild = process.env.NEXT_PHASE === "phase-production-build";
+
+export const db: Db = globalDb.__rastroDb ?? conectar(enBuild ? ":memory:" : RUTA_DB);
 
 if (process.env.NODE_ENV !== "production") {
   globalDb.__rastroDb = db;
