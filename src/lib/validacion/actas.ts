@@ -182,6 +182,14 @@ export const MAXIMO_BYTES_FOTO = 800 * 1024;
 export const MAXIMO_FOTOS = 4;
 
 // ---------------------------------------------------------------------------
+// Acta firmada escaneada
+// ---------------------------------------------------------------------------
+
+export const TIPOS_ESCANEO = ["application/pdf", "image/jpeg", "image/png"] as const;
+/** Tope por archivo escaneado (sin reducir: debe leerse la firma). */
+export const MAXIMO_BYTES_ESCANEO = 10 * 1024 * 1024;
+
+// ---------------------------------------------------------------------------
 // Datos comunes de crear y editar
 // ---------------------------------------------------------------------------
 

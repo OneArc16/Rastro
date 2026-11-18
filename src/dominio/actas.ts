@@ -25,6 +25,7 @@ import {
   TIPOS_FOTO,
   type FormatoImpreso,
 } from "@/lib/validacion/actas";
+import { coincideConTipo } from "@/lib/archivos";
 import { darDeBajaEn, llevarADestinoEn, type Tx } from "./asignaciones";
 import { ErrorDeNegocio, validarFecha } from "./comunes";
 
@@ -150,23 +151,6 @@ function validarContenido(tipo: TipoActa, datos: Record<string, unknown>) {
   return resultado.data as Record<string, unknown>;
 }
 
-/** Primeros bytes de cada tipo de imagen permitido. */
-function esImagenDelTipo(contenido: Buffer, tipo: string) {
-  switch (tipo) {
-    case "image/jpeg":
-      return contenido.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]));
-    case "image/png":
-      return contenido.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
-    case "image/webp":
-      return (
-        contenido.subarray(0, 4).toString("latin1") === "RIFF" &&
-        contenido.subarray(8, 12).toString("latin1") === "WEBP"
-      );
-    default:
-      return false;
-  }
-}
-
 function validarFoto(foto: Foto) {
   if (!(TIPOS_FOTO as readonly string[]).includes(foto.tipo)) {
     throw new ErrorDeNegocio("La foto debe ser JPG, PNG o WEBP");
@@ -174,7 +158,7 @@ function validarFoto(foto: Foto) {
   if (foto.contenido.length > MAXIMO_BYTES_FOTO) {
     throw new ErrorDeNegocio("La foto es demasiado grande");
   }
-  if (!esImagenDelTipo(foto.contenido, foto.tipo)) {
+  if (!coincideConTipo(foto.contenido, foto.tipo)) {
     throw new ErrorDeNegocio("El archivo no es una imagen válida");
   }
 }

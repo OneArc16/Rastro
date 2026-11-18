@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FileCheck2, FileClock } from "lucide-react";
 import type { FilaActa } from "@/db/busqueda-actas";
 import { Badge } from "@/components/ui/badge";
 import { TIPOS_ACTA_CORTOS } from "@/lib/actas";
@@ -30,6 +31,15 @@ export function TablaActas({ actas, vacio }: { actas: FilaActa[]; vacio: string 
                 {acta.editadaEn && (
                   <Badge variant="outline" className="ml-1">
                     Editada
+                  </Badge>
+                )}
+                {acta.escaneos > 0 ? (
+                  <Badge variant="outline" className="ml-1 gap-1">
+                    <FileCheck2 aria-hidden /> Firmada
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="ml-1 gap-1 text-muted-foreground">
+                    <FileClock aria-hidden /> Sin firmar
                   </Badge>
                 )}
               </td>

@@ -282,6 +282,25 @@ export const actasFotos = sqliteTable(
   (t) => [index("actas_fotos_acta_idx").on(t.actaId, t.versionId)],
 );
 
+// Copia escaneada del acta firmada (PDF o imagen), para no perder el papel
+export const actasEscaneos = sqliteTable(
+  "actas_escaneos",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    actaId: integer("acta_id")
+      .notNull()
+      .references(() => actas.id),
+    nombre: text("nombre").notNull(), // nombre del archivo subido
+    tipo: text("tipo").notNull(), // "application/pdf", "image/jpeg", "image/png"
+    tamano: integer("tamano").notNull(), // bytes
+    contenido: blob("contenido", { mode: "buffer" }).notNull(),
+    subidoEn: integer("subido_en", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [index("actas_escaneos_acta_idx").on(t.actaId)],
+);
+
 // ---------------------------------------------------------------------------
 // Tipos para usar en el resto de la app
 // ---------------------------------------------------------------------------

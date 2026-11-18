@@ -20,6 +20,7 @@ type VarianteBoton = "default" | "outline" | "destructive" | "secondary";
 type Props = {
   textoDisparador: string;
   varianteDisparador?: VarianteBoton;
+  tamanoDisparador?: "default" | "sm";
   titulo: string;
   descripcion?: string;
   textoConfirmar: string;
@@ -37,6 +38,7 @@ type Props = {
 export function DialogoAccion({
   textoDisparador,
   varianteDisparador = "outline",
+  tamanoDisparador = "default",
   titulo,
   descripcion,
   textoConfirmar,
@@ -76,7 +78,11 @@ export function DialogoAccion({
   return (
     <Dialog open={abierto} onOpenChange={alCambiarApertura}>
       <DialogTrigger
-        render={<Button variant={varianteDisparador}>{textoDisparador}</Button>}
+        render={
+          <Button variant={varianteDisparador} size={tamanoDisparador}>
+            {textoDisparador}
+          </Button>
+        }
       />
       <DialogContent>
         <DialogHeader>

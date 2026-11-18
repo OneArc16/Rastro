@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { actaConFormatoVigente, obtenerActa } from "@/db/consultas-actas";
+import { actaConFormatoVigente, listarEscaneos, obtenerActa } from "@/db/consultas-actas";
 import { BotonEnlace } from "@/components/boton-enlace";
 import { BotonImprimir } from "@/components/boton-imprimir";
 import { AvisoFormato } from "@/components/actas/aviso-formato";
 import { FormatoActa } from "@/components/actas/formato-acta";
+import { SeccionEscaneos } from "@/components/actas/seccion-escaneos";
 import { Badge } from "@/components/ui/badge";
 import { NOMBRES_ACTA } from "@/lib/actas";
 import { formatearFecha } from "@/lib/fechas";
@@ -71,6 +72,8 @@ export default async function PaginaActa({ params, searchParams }: PageProps<"/a
         </div>
 
         {!anterior && !actaConFormatoVigente(acta) && <AvisoFormato actaId={acta.id} />}
+
+        {!anterior && <SeccionEscaneos actaId={acta.id} escaneos={listarEscaneos(acta.id)} />}
 
         {acta.equipos.length > 0 && (
           <p className="flex flex-wrap items-center gap-2 text-sm">

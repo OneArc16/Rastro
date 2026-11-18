@@ -3,6 +3,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { beforeEach, describe, expect, it } from "vitest";
 import { conectar, type Db } from "@/db";
 import { crearActa, crearActaDeBaja, crearActaDeEgreso, FORMATOS_PREDETERMINADOS } from "@/dominio/actas";
+import { adjuntarEscaneo } from "@/dominio/escaneos";
 import { esquemaDatosBaja, esquemaDatosEgreso, esquemaDatosEntrega } from "@/lib/validacion/actas";
 import { buscarActasEn, interpretarCodigoActa } from "./busqueda-actas";
 import { activos, funcionarios, ubicaciones } from "./schema";
@@ -98,6 +99,17 @@ describe("buscarActasEn", () => {
     expect(codigos(buscarActasEn(db, { texto: "dispensario" }))).toEqual(["EGR-0001"]);
     expect(codigos(buscarActasEn(db, { texto: "circuitos" }))).toEqual(["BAJ-0001"]);
     expect(codigos(buscarActasEn(db, { texto: "ana prueba" }))).toEqual(["ENT-0001"]);
+  });
+
+  it("indica cuántos archivos escaneados tiene cada acta", () => {
+    const [baja, egreso] = buscarActasEn(db, {});
+    const pdf = Buffer.from("%PDF-1.7 firmada");
+    adjuntarEscaneo(db, { actaId: baja.id, nombre: "a.pdf", tipo: "application/pdf", contenido: pdf });
+    adjuntarEscaneo(db, { actaId: baja.id, nombre: "b.pdf", tipo: "application/pdf", contenido: pdf });
+
+    const porId = new Map(buscarActasEn(db, {}).map((a) => [a.id, a.escaneos]));
+    expect(porId.get(baja.id)).toBe(2);
+    expect(porId.get(egreso.id)).toBe(0);
   });
 
   it("trata % y _ como texto, no como comodines", () => {

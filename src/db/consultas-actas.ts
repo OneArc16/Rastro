@@ -10,6 +10,7 @@ import { db } from "./index";
 import {
   actas,
   actasActivos,
+  actasEscaneos,
   actasFotos,
   actasVersiones,
   activos,
@@ -100,6 +101,37 @@ export function obtenerFotoActa(actaId: number, fotoId: number) {
       .select({ contenido: actasFotos.contenido, tipo: actasFotos.tipo })
       .from(actasFotos)
       .where(and(eq(actasFotos.id, fotoId), eq(actasFotos.actaId, actaId)))
+      .get() ?? null
+  );
+}
+
+/** Archivos del acta firmada escaneada, sin su contenido, del más antiguo al más nuevo. */
+export function listarEscaneos(actaId: number) {
+  return db
+    .select({
+      id: actasEscaneos.id,
+      nombre: actasEscaneos.nombre,
+      tipo: actasEscaneos.tipo,
+      tamano: actasEscaneos.tamano,
+      subidoEn: actasEscaneos.subidoEn,
+    })
+    .from(actasEscaneos)
+    .where(eq(actasEscaneos.actaId, actaId))
+    .orderBy(asc(actasEscaneos.id))
+    .all();
+}
+
+/** Un archivo escaneado con su contenido, si pertenece a esa acta. */
+export function obtenerEscaneo(actaId: number, escaneoId: number) {
+  return (
+    db
+      .select({
+        nombre: actasEscaneos.nombre,
+        tipo: actasEscaneos.tipo,
+        contenido: actasEscaneos.contenido,
+      })
+      .from(actasEscaneos)
+      .where(and(eq(actasEscaneos.id, escaneoId), eq(actasEscaneos.actaId, actaId)))
       .get() ?? null
   );
 }

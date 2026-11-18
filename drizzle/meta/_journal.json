@@ -22,6 +22,13 @@
       "when": 1794933371640,
       "tag": "0002_solid_wither",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1795007565931,
+      "tag": "0003_abnormal_photon",
+      "breakpoints": true
     }
   ]
 }

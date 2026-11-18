@@ -5,7 +5,15 @@
 import { and, desc, eq, gte, lte, or, sql, type SQL } from "drizzle-orm";
 import { codigoActa } from "@/dominio/actas";
 import type { Db } from "./index";
-import { actas, actasActivos, activos, funcionarios, ubicaciones, type TipoActa } from "./schema";
+import {
+  actas,
+  actasActivos,
+  actasEscaneos,
+  activos,
+  funcionarios,
+  ubicaciones,
+  type TipoActa,
+} from "./schema";
 
 
 export type FiltrosActas = {
@@ -68,6 +76,8 @@ export function buscarActasEn(base: Db, filtros: FiltrosActas, limite = 200) {
       funcionario: funcionarios.nombre,
       ubicacion: ubicaciones.nombre,
       equipos: sql<string | null>`(select group_concat(${activos.codigo}, ', ') from ${actasActivos} inner join ${activos} on ${activos.id} = ${actasActivos.activoId} where ${actasActivos.actaId} = ${actas.id})`,
+      // Archivos del acta firmada escaneada (0 = falta escanearla)
+      escaneos: sql<number>`(select count(*) from ${actasEscaneos} where ${actasEscaneos.actaId} = ${actas.id})`,
     })
     .from(actas)
     .leftJoin(funcionarios, eq(funcionarios.id, actas.funcionarioId))
