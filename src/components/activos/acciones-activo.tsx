@@ -23,6 +23,68 @@ import { ETIQUETAS_TIPO } from "@/lib/etiquetas";
 import { hoyIso } from "@/lib/fechas";
 
 type ActivoResumen = { id: number; codigo: string };
+type Ubicacion = { id: number; nombre: string };
+type QuienSeMueve = "funcionario" | "equipo";
+
+/**
+ * Al trasladar a un funcionario que está en otra ubicación que el equipo:
+ * pregunta si se va la persona o se va el equipo.
+ */
+function PreguntaUbicacion({
+  funcionario,
+  ubicacionEquipo,
+  ubicacionFuncionario,
+  valor,
+  alCambiar,
+}: {
+  funcionario: string;
+  ubicacionEquipo: string;
+  ubicacionFuncionario: string | null;
+  valor: QuienSeMueve | "";
+  alCambiar: (valor: QuienSeMueve) => void;
+}) {
+  const opciones: { valor: QuienSeMueve; titulo: string; detalle: string }[] = [
+    {
+      valor: "funcionario",
+      titulo: `${funcionario} se va a ${ubicacionEquipo}`,
+      detalle: `Su ubicación cambia a ${ubicacionEquipo}; sus otros equipos asignados también quedan ahí.`,
+    },
+    {
+      valor: "equipo",
+      titulo: ubicacionFuncionario
+        ? `El equipo va a ${ubicacionFuncionario}`
+        : `El equipo queda con ${funcionario}, sin ubicación`,
+      detalle: `${funcionario} sigue ${ubicacionFuncionario ? `en ${ubicacionFuncionario}` : "sin ubicación"}.`,
+    },
+  ];
+  return (
+    <div
+      role="radiogroup"
+      aria-labelledby="pregunta-ubicacion"
+      className="space-y-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3"
+    >
+      <p id="pregunta-ubicacion" className="text-sm font-medium">
+        El equipo está en {ubicacionEquipo} y {funcionario}{" "}
+        {ubicacionFuncionario ? `en ${ubicacionFuncionario}` : "no tiene ubicación"}. ¿Quién cambia de lugar?
+      </p>
+      {opciones.map((o) => (
+        <label key={o.valor} className="flex cursor-pointer items-start gap-2 text-sm">
+          <input
+            type="radio"
+            name="se-mueve"
+            className="mt-0.5 size-4 accent-primary"
+            checked={valor === o.valor}
+            onChange={() => alCambiar(o.valor)}
+          />
+          <span>
+            <span className="font-medium">{o.titulo}</span>
+            <span className="block text-muted-foreground">{o.detalle}</span>
+          </span>
+        </label>
+      ))}
+    </div>
+  );
+}
 
 type ActivoAsignado = {
   id: number;
@@ -37,16 +99,31 @@ function DialogoMovimiento({
   activo,
   destinos,
   modo,
+  ubicacionActual = null,
 }: {
   activo: ActivoResumen;
   destinos: Destinos;
   modo: "asignar" | "trasladar";
+  ubicacionActual?: Ubicacion | null;
 }) {
   const [tipo, setTipo] = useState<TipoDestino>("funcionario");
   const [destinoId, setDestinoId] = useState("");
   const [fecha, setFecha] = useState(hoyIso());
   const [motivo, setMotivo] = useState("");
+  const [seMueve, setSeMueve] = useState<QuienSeMueve | "">("");
   const esTraslado = modo === "trasladar";
+
+  // Funcionario elegido que está en otra ubicación que el equipo
+  const funcionario =
+    tipo === "funcionario" ? destinos.funcionarios.find((f) => String(f.id) === destinoId) : undefined;
+  const conflicto =
+    esTraslado && ubicacionActual !== null && funcionario !== undefined && funcionario.ubicacionId !== ubicacionActual.id
+      ? {
+          funcionario: funcionario.nombre,
+          ubicacionFuncionario:
+            destinos.ubicaciones.find((u) => u.id === funcionario.ubicacionId)?.nombre ?? null,
+        }
+      : null;
 
   return (
     <DialogoAccion
@@ -65,9 +142,17 @@ function DialogoMovimiento({
         setDestinoId("");
         setFecha(hoyIso());
         setMotivo("");
+        setSeMueve("");
       }}
       alConfirmar={() => {
-        const datos = { activoId: activo.id, tipoDestino: tipo, destinoId, fecha, motivo };
+        const datos = {
+          activoId: activo.id,
+          tipoDestino: tipo,
+          destinoId,
+          fecha,
+          motivo,
+          seMueve: conflicto && seMueve ? seMueve : undefined,
+        };
         return esTraslado ? trasladarActivo(datos) : asignarActivo(datos);
       }}
     >
@@ -76,8 +161,20 @@ function DialogoMovimiento({
         tipo={tipo}
         destinoId={destinoId}
         alCambiarTipo={setTipo}
-        alCambiarDestino={setDestinoId}
+        alCambiarDestino={(id) => {
+          setDestinoId(id);
+          setSeMueve("");
+        }}
       />
+      {conflicto && ubicacionActual && (
+        <PreguntaUbicacion
+          funcionario={conflicto.funcionario}
+          ubicacionEquipo={ubicacionActual.nombre}
+          ubicacionFuncionario={conflicto.ubicacionFuncionario}
+          valor={seMueve}
+          alCambiar={setSeMueve}
+        />
+      )}
       <CampoFecha valor={fecha} alCambiar={setFecha} />
       <CampoMotivo
         valor={motivo}
@@ -187,6 +284,8 @@ type Props = {
   tieneVigente: boolean;
   destinos: Destinos;
   asignados: ActivoAsignado[];
+  /** Dónde está hoy el activo, para preguntar quién se mueve al trasladar. */
+  ubicacionActual: Ubicacion | null;
 };
 
 /** Acciones disponibles según el estado del activo. */
@@ -196,6 +295,7 @@ export function AccionesActivo({
   tieneVigente,
   destinos,
   asignados,
+  ubicacionActual,
 }: Props) {
   if (dadoDeBaja) return null;
 
@@ -203,7 +303,12 @@ export function AccionesActivo({
     <div className="flex flex-wrap gap-2">
       {tieneVigente ? (
         <>
-          <DialogoMovimiento activo={activo} destinos={destinos} modo="trasladar" />
+          <DialogoMovimiento
+            activo={activo}
+            destinos={destinos}
+            modo="trasladar"
+            ubicacionActual={ubicacionActual}
+          />
           <DialogoIntercambio activo={activo} asignados={asignados} />
           <DialogoDevolver activo={activo} />
         </>

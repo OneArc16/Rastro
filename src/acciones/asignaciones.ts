@@ -38,6 +38,7 @@ export async function trasladarActivo(datos: unknown): Promise<ResultadoAccion> 
       destino: aDestino(d.tipoDestino, d.destinoId),
       fecha: d.fecha,
       motivo: d.motivo,
+      seMueve: d.seMueve,
     }),
   );
 }

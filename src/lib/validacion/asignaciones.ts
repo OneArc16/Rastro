@@ -10,6 +10,8 @@ export const esquemaMovimiento = z.object({
   destinoId: idPositivo("Seleccione el destino"),
   fecha: fechaObligatoria,
   motivo: textoOpcional,
+  /** Solo al trasladar a un funcionario de otra ubicación: quién cambia de lugar. */
+  seMueve: z.enum(["funcionario", "equipo"]).optional(),
 });
 
 export const esquemaDevolucion = z.object({

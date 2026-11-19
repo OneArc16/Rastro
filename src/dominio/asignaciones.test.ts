@@ -174,6 +174,94 @@ describe("trasladar", () => {
   });
 });
 
+describe("trasladar a un funcionario de otra ubicación", () => {
+  let consultorio: number;
+  let carla: number;
+
+  const ubicacionDe = (funcionarioId: number) =>
+    db.select().from(funcionarios).where(eq(funcionarios.id, funcionarioId)).get()?.ubicacionId ?? null;
+
+  beforeEach(() => {
+    consultorio = db.insert(ubicaciones).values({ nombre: "CONSULTORIO 9" }).returning().get().id;
+    carla = db.insert(funcionarios).values({ nombre: "CARLA", ubicacionId: bodega }).returning().get().id;
+    // El PC está compartido en el consultorio
+    asignar(db, { activoId: pc1, destino: { ubicacionId: consultorio }, fecha: "2026-01-10" });
+  });
+
+  it("exige elegir quién cambia de ubicación, sin tocar nada si no se indica", () => {
+    expect(() =>
+      trasladar(db, { activoId: pc1, destino: { funcionarioId: carla }, fecha: "2026-02-01" }),
+    ).toThrow(
+      new ErrorDeNegocio(
+        "Indique si CARLA se va a CONSULTORIO 9 (la ubicación del equipo) o si el equipo va a BODEGA",
+      ),
+    );
+    expect(vigenteDe(pc1)?.ubicacionId).toBe(consultorio);
+    expect(ubicacionDe(carla)).toBe(bodega);
+  });
+
+  it("si se va el funcionario, queda en la ubicación del equipo", () => {
+    trasladar(db, {
+      activoId: pc1,
+      destino: { funcionarioId: carla },
+      fecha: "2026-02-01",
+      seMueve: "funcionario",
+    });
+    expect(vigenteDe(pc1)).toMatchObject({ funcionarioId: carla, ubicacionId: null });
+    expect(ubicacionDe(carla)).toBe(consultorio);
+  });
+
+  it("si se va el equipo, el funcionario conserva su ubicación", () => {
+    trasladar(db, {
+      activoId: pc1,
+      destino: { funcionarioId: carla },
+      fecha: "2026-02-01",
+      seMueve: "equipo",
+    });
+    expect(vigenteDe(pc1)).toMatchObject({ funcionarioId: carla, ubicacionId: null });
+    expect(ubicacionDe(carla)).toBe(bodega);
+  });
+
+  it("no pregunta si el funcionario ya está en la ubicación del equipo", () => {
+    db.update(funcionarios).set({ ubicacionId: consultorio }).where(eq(funcionarios.id, carla)).run();
+    trasladar(db, { activoId: pc1, destino: { funcionarioId: carla }, fecha: "2026-02-01" });
+    expect(vigenteDe(pc1)?.funcionarioId).toBe(carla);
+  });
+
+  it("también pregunta al pasar el equipo de un funcionario a otro de distinta ubicación", () => {
+    db.update(funcionarios).set({ ubicacionId: consultorio }).where(eq(funcionarios.id, ana)).run();
+    trasladar(db, { activoId: pc1, destino: { funcionarioId: ana }, fecha: "2026-02-01" });
+
+    expect(() =>
+      trasladar(db, { activoId: pc1, destino: { funcionarioId: carla }, fecha: "2026-03-01" }),
+    ).toThrow(ErrorDeNegocio);
+    trasladar(db, {
+      activoId: pc1,
+      destino: { funcionarioId: carla },
+      fecha: "2026-03-01",
+      seMueve: "funcionario",
+    });
+    expect(ubicacionDe(carla)).toBe(consultorio);
+  });
+
+  it("también pregunta si el funcionario no tiene ubicación", () => {
+    expect(() =>
+      trasladar(db, { activoId: pc1, destino: { funcionarioId: ana }, fecha: "2026-02-01" }),
+    ).toThrow(
+      new ErrorDeNegocio(
+        "Indique si ANA se va a CONSULTORIO 9 (la ubicación del equipo) o si el equipo queda con ANA, que no tiene ubicación",
+      ),
+    );
+    trasladar(db, { activoId: pc1, destino: { funcionarioId: ana }, fecha: "2026-02-01", seMueve: "equipo" });
+    expect(ubicacionDe(ana)).toBeNull();
+  });
+
+  it("la pregunta no aplica al trasladar a una ubicación", () => {
+    trasladar(db, { activoId: pc1, destino: { ubicacionId: bodega }, fecha: "2026-02-01" });
+    expect(vigenteDe(pc1)?.ubicacionId).toBe(bodega);
+  });
+});
+
 describe("devolver", () => {
   it("cierra la vigente y deja el activo disponible", () => {
     asignar(db, { activoId: pc1, destino: { funcionarioId: ana }, fecha: "2025-01-10" });

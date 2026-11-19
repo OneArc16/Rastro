@@ -11,6 +11,13 @@ import { ErrorDeNegocio, validarFecha } from "./comunes";
 
 export type Destino = { funcionarioId: number } | { ubicacionId: number };
 
+/**
+ * Al trasladar un equipo a un funcionario de otra ubicación: si es el
+ * funcionario el que se va a la ubicación del equipo, o el equipo el que va
+ * a la ubicación del funcionario.
+ */
+export type QuienSeMueve = "funcionario" | "equipo";
+
 export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 
 // ---------------------------------------------------------------------------
@@ -87,6 +94,61 @@ function mismoDestino(a: Destino, b: Destino): boolean {
   return false;
 }
 
+/**
+ * Ubicación donde está hoy el activo: la de su asignación si es compartido,
+ * o la de su responsable si está asignado a un funcionario.
+ */
+export function ubicacionActualDelActivo(tx: Db | Tx, activoId: number): number | null {
+  const vigente = obtenerVigente(tx as Tx, activoId);
+  if (!vigente) return null;
+  if (vigente.ubicacionId !== null) return vigente.ubicacionId;
+  return (
+    tx
+      .select({ ubicacionId: funcionarios.ubicacionId })
+      .from(funcionarios)
+      .where(eq(funcionarios.id, vigente.funcionarioId as number))
+      .get()?.ubicacionId ?? null
+  );
+}
+
+function nombreUbicacion(tx: Tx, ubicacionId: number) {
+  return tx.select().from(ubicaciones).where(eq(ubicaciones.id, ubicacionId)).get()?.nombre ?? "";
+}
+
+/**
+ * Si el equipo va a un funcionario que está en otra ubicación, exige saber
+ * quién se mueve; si se va el funcionario, actualiza su ubicación.
+ */
+function resolverUbicacion(
+  tx: Tx,
+  activoId: number,
+  destino: Destino,
+  seMueve: QuienSeMueve | undefined,
+) {
+  if (!("funcionarioId" in destino)) return;
+  const delEquipo = ubicacionActualDelActivo(tx, activoId);
+  if (delEquipo === null) return;
+  const funcionario = tx
+    .select()
+    .from(funcionarios)
+    .where(eq(funcionarios.id, destino.funcionarioId))
+    .get();
+  if (!funcionario || funcionario.ubicacionId === delEquipo) return;
+
+  if (!seMueve) {
+    const equipoVa =
+      funcionario.ubicacionId === null
+        ? `si el equipo queda con ${funcionario.nombre}, que no tiene ubicación`
+        : `si el equipo va a ${nombreUbicacion(tx, funcionario.ubicacionId)}`;
+    throw new ErrorDeNegocio(
+      `Indique si ${funcionario.nombre} se va a ${nombreUbicacion(tx, delEquipo)} (la ubicación del equipo) o ${equipoVa}`,
+    );
+  }
+  if (seMueve === "funcionario") {
+    tx.update(funcionarios).set({ ubicacionId: delEquipo }).where(eq(funcionarios.id, funcionario.id)).run();
+  }
+}
+
 /** Cierra una asignación vigente; la fecha no puede ser anterior a su inicio. */
 function cerrar(tx: Tx, vigente: typeof asignaciones.$inferSelect, fecha: string) {
   if (fecha < vigente.fechaDesde) {
@@ -129,6 +191,8 @@ type DatosAsignar = {
   motivo?: string;
 };
 
+type DatosTrasladar = DatosAsignar & { seMueve?: QuienSeMueve };
+
 export function asignar(db: Db, datos: DatosAsignar) {
   db.transaction((tx) => asignarEn(tx, datos));
 }
@@ -146,12 +210,12 @@ export function asignarEn(tx: Tx, datos: DatosAsignar) {
   abrir(tx, activo.id, datos.destino, datos.fecha, datos.motivo);
 }
 
-export function trasladar(db: Db, datos: DatosAsignar) {
+export function trasladar(db: Db, datos: DatosTrasladar) {
   db.transaction((tx) => trasladarEn(tx, datos));
 }
 
 /** Igual que trasladar, dentro de una transacción ya abierta. */
-export function trasladarEn(tx: Tx, datos: DatosAsignar) {
+export function trasladarEn(tx: Tx, datos: DatosTrasladar) {
   validarFecha(datos.fecha);
   const activo = obtenerActivoUtilizable(tx, datos.activoId);
   const vigente = exigirVigente(tx, activo.id, activo.codigo);
@@ -159,6 +223,8 @@ export function trasladarEn(tx: Tx, datos: DatosAsignar) {
     throw new ErrorDeNegocio("El activo ya está asignado a ese destino");
   }
   validarDestino(tx, datos.destino);
+  // Antes de cerrar la vigente: la ubicación del equipo sale de ella
+  resolverUbicacion(tx, activo.id, datos.destino, datos.seMueve);
   cerrar(tx, vigente, datos.fecha);
   abrir(tx, activo.id, datos.destino, datos.fecha, datos.motivo);
 }

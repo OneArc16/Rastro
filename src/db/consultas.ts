@@ -7,6 +7,7 @@ import { and, asc, count, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import type { DatosHojaDeVida } from "@/dominio/hoja-de-vida";
 import type { FilaEstadistica } from "@/dominio/estadisticas";
+import { ubicacionActualDelActivo } from "@/dominio/asignaciones";
 import { garantiasPorVencer, pendientesDeMantenimiento } from "@/dominio/mantenimientos";
 import { siguienteCodigo } from "@/lib/codigos";
 import { db } from "./index";
@@ -266,7 +267,7 @@ export function propuestasDeCodigo(): Record<TipoActivo, string> {
 /** Posibles destinos de una asignación: funcionarios no retirados y ubicaciones. */
 export function listarDestinos() {
   const funcionariosActivos = db
-    .select({ id: funcionarios.id, nombre: funcionarios.nombre })
+    .select({ id: funcionarios.id, nombre: funcionarios.nombre, ubicacionId: funcionarios.ubicacionId })
     .from(funcionarios)
     .where(eq(funcionarios.retirado, false))
     .orderBy(asc(funcionarios.nombre))
@@ -275,6 +276,16 @@ export function listarDestinos() {
 }
 
 export type Destinos = ReturnType<typeof listarDestinos>;
+
+/** Dónde está hoy el activo (por su asignación o por su responsable), o null. */
+export function ubicacionActualDeActivo(activoId: number) {
+  const id = ubicacionActualDelActivo(db, activoId);
+  if (id === null) return null;
+  return (
+    db.select({ id: ubicaciones.id, nombre: ubicaciones.nombre }).from(ubicaciones).where(eq(ubicaciones.id, id)).get() ??
+    null
+  );
+}
 
 /** Activos con asignación vigente, para elegir la contraparte de un intercambio. */
 export function listarActivosAsignados() {

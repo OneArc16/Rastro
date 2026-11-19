@@ -5,6 +5,7 @@ import {
   listarActivosAsignados,
   listarDestinos,
   obtenerFichaActivo,
+  ubicacionActualDeActivo,
 } from "@/db/consultas";
 import { buscarActas } from "@/db/consultas-actas";
 import { AccionesActivo } from "@/components/activos/acciones-activo";
@@ -86,6 +87,7 @@ export default async function PaginaFichaActivo({
         tieneVigente={asignacionVigente !== null}
         destinos={listarDestinos()}
         asignados={listarActivosAsignados()}
+        ubicacionActual={ubicacionActualDeActivo(activo.id)}
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
