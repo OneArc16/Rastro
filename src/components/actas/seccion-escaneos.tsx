@@ -18,34 +18,32 @@ function tamano(bytes: number) {
     : `${(bytes / (1024 * 1024)).toFixed(1).replace(".", ",")} MB`;
 }
 
-/** Acta firmada escaneada: subir (clic o arrastrar), ver, descargar y eliminar. */
+/** Acta firmada escaneada (una por acta): subir (clic o arrastrar), ver, descargar y eliminar. */
 export function SeccionEscaneos({ actaId, escaneos }: { actaId: number; escaneos: Escaneo[] }) {
   const router = useRouter();
   const entrada = useRef<HTMLInputElement>(null);
   const [arrastrando, setArrastrando] = useState(false);
   const [subiendo, iniciarSubida] = useTransition();
-  const [progreso, setProgreso] = useState("");
 
   function subir(lista: FileList | null | undefined) {
     const archivos = Array.from(lista ?? []);
     if (entrada.current) entrada.current.value = "";
     if (archivos.length === 0) return;
+    if (archivos.length > 1) {
+      toast.error("Cada acta lleva un solo archivo escaneado: elija uno.");
+      return;
+    }
 
     iniciarSubida(async () => {
-      let subidos = 0;
-      // Uno por envío: cada archivo puede pesar hasta 10 MB
-      for (const [i, archivo] of archivos.entries()) {
-        setProgreso(archivos.length > 1 ? `Subiendo ${i + 1} de ${archivos.length}…` : "Subiendo…");
-        const formulario = new FormData();
-        formulario.set("archivo", archivo);
-        const resultado = await subirEscaneoAccion(actaId, formulario);
-        if (resultado.ok) subidos++;
-        else toast.error(`${archivo.name}: ${resultado.error}`);
+      const formulario = new FormData();
+      formulario.set("archivo", archivos[0]);
+      const resultado = await subirEscaneoAccion(actaId, formulario);
+      if (!resultado.ok) {
+        toast.error(resultado.error);
+        return;
       }
-      if (subidos > 0) {
-        toast.success(subidos === 1 ? "Se adjuntó el acta escaneada" : `Se adjuntaron ${subidos} archivos`);
-        router.refresh();
-      }
+      toast.success("Se adjuntó el acta escaneada");
+      router.refresh();
     });
   }
 
@@ -64,7 +62,7 @@ export function SeccionEscaneos({ actaId, escaneos }: { actaId: number; escaneos
         <p className="text-sm text-muted-foreground">
           {escaneos.length === 0
             ? "Todavía no se adjuntó la copia firmada de esta acta."
-            : "Copia firmada guardada en el sistema; se incluye en los respaldos."}
+            : "Copia firmada guardada en el sistema; se incluye en los respaldos. Para cambiarla, elimínela y adjunte la nueva."}
         </p>
       </div>
 
@@ -118,46 +116,45 @@ export function SeccionEscaneos({ actaId, escaneos }: { actaId: number; escaneos
         </ul>
       )}
 
-      <label
-        onDragOver={(e) => {
-          e.preventDefault();
-          setArrastrando(true);
-        }}
-        onDragLeave={() => setArrastrando(false)}
-        onDrop={alSoltar}
-        className={cn(
-          "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-6 text-center transition-colors",
-          "hover:border-primary/60 hover:bg-muted/40 has-focus-visible:border-ring has-focus-visible:ring-3 has-focus-visible:ring-ring/50",
-          arrastrando && "border-primary bg-primary/5",
-          subiendo && "pointer-events-none opacity-70",
-        )}
-      >
-        <input
-          ref={entrada}
-          type="file"
-          accept="application/pdf,image/jpeg,image/png"
-          multiple
-          className="sr-only"
-          disabled={subiendo}
-          onChange={(e) => subir(e.target.files)}
-        />
-        {subiendo ? (
-          <>
-            <Loader2 className="size-7 animate-spin text-muted-foreground" />
-            <span className="text-sm font-medium">{progreso}</span>
-          </>
-        ) : (
-          <>
-            <FileUp className="size-7 text-muted-foreground" />
-            <span className="text-sm font-medium">
-              {escaneos.length === 0 ? "Adjuntar el acta firmada" : "Adjuntar otro archivo"}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              Haga clic para elegir o arrastre aquí el escaneo. PDF, JPG o PNG, hasta 10 MB cada uno.
-            </span>
-          </>
-        )}
-      </label>
+      {escaneos.length === 0 && (
+        <label
+          onDragOver={(e) => {
+            e.preventDefault();
+            setArrastrando(true);
+          }}
+          onDragLeave={() => setArrastrando(false)}
+          onDrop={alSoltar}
+          className={cn(
+            "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-6 text-center transition-colors",
+            "hover:border-primary/60 hover:bg-muted/40 has-focus-visible:border-ring has-focus-visible:ring-3 has-focus-visible:ring-ring/50",
+            arrastrando && "border-primary bg-primary/5",
+            subiendo && "pointer-events-none opacity-70",
+          )}
+        >
+          <input
+            ref={entrada}
+            type="file"
+            accept="application/pdf,image/jpeg,image/png"
+            className="sr-only"
+            disabled={subiendo}
+            onChange={(e) => subir(e.target.files)}
+          />
+          {subiendo ? (
+            <>
+              <Loader2 className="size-7 animate-spin text-muted-foreground" />
+              <span className="text-sm font-medium">Subiendo…</span>
+            </>
+          ) : (
+            <>
+              <FileUp className="size-7 text-muted-foreground" />
+              <span className="text-sm font-medium">Adjuntar el acta firmada</span>
+              <span className="text-xs text-muted-foreground">
+                Haga clic para elegir o arrastre aquí el escaneo. Un archivo PDF, JPG o PNG de hasta 10 MB.
+              </span>
+            </>
+          )}
+        </label>
+      )}
     </section>
   );
 }

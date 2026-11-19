@@ -9,9 +9,6 @@ import { coincideConTipo } from "@/lib/archivos";
 import { MAXIMO_BYTES_ESCANEO, TIPOS_ESCANEO } from "@/lib/validacion/actas";
 import { ErrorDeNegocio } from "./comunes";
 
-/** Archivos escaneados que admite un acta (por ejemplo, una hoja por archivo). */
-export const MAXIMO_ESCANEOS = 10;
-
 const NOMBRE_POR_DEFECTO = "acta-escaneada";
 
 /** Solo el nombre del archivo, sin carpetas ni caracteres de control, y con un largo razonable. */
@@ -43,11 +40,12 @@ export function adjuntarEscaneo(
   return db.transaction((tx) => {
     const acta = tx.select({ id: actas.id }).from(actas).where(eq(actas.id, datos.actaId)).get();
     if (!acta) throw new ErrorDeNegocio("El acta no existe");
+    // Cada acta tiene un solo formato: una sola copia escaneada
     const existentes =
       tx.select({ total: count() }).from(actasEscaneos).where(eq(actasEscaneos.actaId, acta.id)).get()
         ?.total ?? 0;
-    if (existentes >= MAXIMO_ESCANEOS) {
-      throw new ErrorDeNegocio(`El acta ya tiene ${MAXIMO_ESCANEOS} archivos escaneados`);
+    if (existentes > 0) {
+      throw new ErrorDeNegocio("El acta ya tiene su copia escaneada; elimínela para subir otra");
     }
 
     return tx
