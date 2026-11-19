@@ -9,9 +9,8 @@ import { eliminarEscaneoAccion, subirEscaneoAccion } from "@/acciones/escaneos";
 import { DialogoAccion } from "@/components/acciones/dialogo-accion";
 import { buttonVariants } from "@/components/ui/button";
 
-type Escaneo = { id: number; nombre: string; tipo: string; tamano: number; subidoEn: Date };
-
-const formatoFecha = new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" });
+/** "subido" llega formateado desde el servidor, para que coincida al hidratar. */
+type Escaneo = { id: number; nombre: string; tipo: string; tamano: number; subido: string };
 
 function tamano(bytes: number) {
   return bytes < 1024 * 1024
@@ -81,7 +80,7 @@ export function SeccionEscaneos({ actaId, escaneos }: { actaId: number; escaneos
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{e.nombre}</p>
                     <p className="text-xs text-muted-foreground">
-                      {tamano(e.tamano)} · subido el {formatoFecha.format(e.subidoEn)}
+                      {tamano(e.tamano)} · subido el {e.subido}
                     </p>
                   </div>
                 </div>

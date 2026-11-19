@@ -73,7 +73,17 @@ export default async function PaginaActa({ params, searchParams }: PageProps<"/a
 
         {!anterior && !actaConFormatoVigente(acta) && <AvisoFormato actaId={acta.id} />}
 
-        {!anterior && <SeccionEscaneos actaId={acta.id} escaneos={listarEscaneos(acta.id)} />}
+        {!anterior && (
+          <SeccionEscaneos
+            actaId={acta.id}
+            // La fecha va ya formateada desde el servidor: el navegador formatea
+            // con otros espacios ("a. m.") y React detecta que el texto no coincide.
+            escaneos={listarEscaneos(acta.id).map(({ subidoEn, ...e }) => ({
+              ...e,
+              subido: formatoFechaHora.format(subidoEn),
+            }))}
+          />
+        )}
 
         {acta.equipos.length > 0 && (
           <p className="flex flex-wrap items-center gap-2 text-sm">
