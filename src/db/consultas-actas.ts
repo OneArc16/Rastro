@@ -209,6 +209,11 @@ export function datosNuevaBaja(activoId: number) {
   return { equipo, responsable, formato: obtenerFormatoActa(db, "baja") };
 }
 
+/** Formato vigente para una nueva acta de inducción. */
+export function datosNuevaInduccion() {
+  return { formato: obtenerFormatoActa(db, "induccion") };
+}
+
 /** Equipos elegidos para el acta de egreso (se ignoran los dados de baja). */
 export function datosNuevoEgreso(activoIds: number[]) {
   const equipos: EquipoPrecarga[] =

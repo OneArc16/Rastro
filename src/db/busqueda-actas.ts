@@ -26,11 +26,16 @@ export type FiltrosActas = {
   activoId?: number;
 };
 
-const PREFIJO_A_TIPO: Record<string, TipoActa> = { ENT: "entrega", EGR: "egreso", BAJ: "baja" };
+const PREFIJO_A_TIPO: Record<string, TipoActa> = {
+  ENT: "entrega",
+  EGR: "egreso",
+  BAJ: "baja",
+  IND: "induccion",
+};
 
-/** "ENT-0003", "ent3" o "BAJ 12" → tipo y número del acta. */
+/** "ENT-0003", "ent3", "BAJ 12" o "IND-1" → tipo y número del acta. */
 export function interpretarCodigoActa(texto: string) {
-  const partes = /^(ENT|EGR|BAJ)[\s-]*0*(\d+)$/i.exec(texto.trim());
+  const partes = /^(ENT|EGR|BAJ|IND)[\s-]*0*(\d+)$/i.exec(texto.trim());
   if (!partes) return null;
   return { tipo: PREFIJO_A_TIPO[partes[1].toUpperCase()], numero: Number(partes[2]) };
 }

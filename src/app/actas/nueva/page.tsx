@@ -3,13 +3,19 @@ import { notFound } from "next/navigation";
 import {
   datosNuevaBaja,
   datosNuevaEntrega,
+  datosNuevaInduccion,
   datosNuevoEgreso,
   listarEquiposParaEgreso,
 } from "@/db/consultas-actas";
-import { listarUbicacionesSimple } from "@/db/consultas";
+import { listarFuncionarios, listarUbicacionesSimple } from "@/db/consultas";
 import { BotonEnlace } from "@/components/boton-enlace";
 import { FormularioActa } from "@/components/actas/formulario/formulario-acta";
-import { precargarBaja, precargarEgreso, precargarEntrega } from "@/dominio/precarga-actas";
+import {
+  precargarBaja,
+  precargarEgreso,
+  precargarEntrega,
+  precargarInduccion,
+} from "@/dominio/precarga-actas";
 import { NOMBRES_ACTA } from "@/lib/actas";
 import { hoyIso } from "@/lib/fechas";
 
@@ -106,6 +112,22 @@ export default async function PaginaNuevaActa({ searchParams }: PageProps<"/acta
             inicial={{ activoIds, datos: contenido }}
             equipos={listarEquiposParaEgreso()}
             ubicaciones={listarUbicacionesSimple()}
+          />
+        </div>
+      );
+    }
+
+    case "induccion": {
+      const contenido = precargarInduccion({ ...datosNuevaInduccion(), hoy });
+      return (
+        <div className="space-y-6">
+          <Encabezado titulo={NOMBRES_ACTA.induccion} volver="/actas" />
+          <FormularioActa
+            modo="crear"
+            tipo="induccion"
+            inicial={{ activoIds: [], datos: contenido }}
+            equipos={[]}
+            funcionarios={listarFuncionarios()}
           />
         </div>
       );

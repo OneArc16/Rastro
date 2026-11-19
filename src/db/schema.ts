@@ -36,7 +36,7 @@ export const ESTADOS_ACTIVO = [
 
 export const TIPOS_MANTENIMIENTO = ["preventivo", "correctivo"] as const;
 
-export const TIPOS_ACTA = ["entrega", "egreso", "baja"] as const;
+export const TIPOS_ACTA = ["entrega", "egreso", "baja", "induccion"] as const;
 
 // ---------------------------------------------------------------------------
 // Especificaciones propias de cada tipo de activo (columna JSON "specs")

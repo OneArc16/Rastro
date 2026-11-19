@@ -50,6 +50,36 @@
   font-size: 8pt;
 }
 
+.ac-induccion {
+  /* Puede crecer a una segunda página si hay muchos asistentes */
+  height: auto;
+  min-height: 11in;
+  padding: 0.7in 0.76in 0.5in 0.76in;
+  font-family: Arial, var(--fuente-arial), sans-serif;
+  font-size: 11pt;
+}
+
+/* Celdas con fondo azul del formato F-SGI-001 */
+.ac-tabla .ac-azul {
+  background: #5b9bd5;
+}
+
+.ac-tabla .ac-induccion-campo {
+  vertical-align: top;
+  padding: 6pt 6pt;
+}
+
+.ac-induccion-titulo {
+  margin: 14pt 0 0;
+  text-align: center;
+}
+
+.ac-induccion-puntos {
+  margin: 14pt 0 0 30pt;
+  padding: 0;
+  list-style: none;
+}
+
 .ac-cuerpo {
   flex: 1;
 }
@@ -199,5 +229,10 @@
 
   .ac-hoja:last-child {
     break-after: auto;
+  }
+
+  .ac-hoja.ac-induccion {
+    height: auto;
+    min-height: 10.98in;
   }
 }

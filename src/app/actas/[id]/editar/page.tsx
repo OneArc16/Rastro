@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { listarUbicacionesSimple } from "@/db/consultas";
+import { listarFuncionarios, listarUbicacionesSimple } from "@/db/consultas";
 import { listarEquiposParaEgreso, obtenerActa } from "@/db/consultas-actas";
 import { BotonEnlace } from "@/components/boton-enlace";
 import { FormularioActa } from "@/components/actas/formulario/formulario-acta";
@@ -42,6 +42,7 @@ export default async function PaginaEditarActa({ params }: PageProps<"/actas/[id
         }}
         equipos={equipos}
         ubicaciones={acta.tipo === "egreso" ? listarUbicacionesSimple() : []}
+        funcionarios={acta.tipo === "induccion" ? listarFuncionarios() : []}
         fotosGuardadas={acta.fotoIds.map((fotoId) => ({
           id: fotoId,
           url: `/actas/${acta.id}/fotos/${fotoId}`,

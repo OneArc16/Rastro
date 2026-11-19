@@ -51,6 +51,7 @@ const PREFIJOS: Record<TipoActa, string> = {
   entrega: "ENT",
   egreso: "EGR",
   baja: "BAJ",
+  induccion: "IND",
 };
 
 export function codigoActa(tipo: TipoActa, numero: number) {
@@ -72,6 +73,15 @@ export const FORMATOS_PREDETERMINADOS: Record<TipoActa, FormatoImpreso> = {
   entrega: { codigo: "F-SIS-002", version: "003", fechaEmision: "2025-05-15", ...SIN_FIRMANTES },
   egreso: { codigo: "F-SIS-001", version: "002", fechaEmision: "2022-02-23", ...SIN_FIRMANTES },
   baja: { codigo: "FCOM-01", version: "002", fechaEmision: "2019-06-05", ...SIN_FIRMANTES },
+  // Acta de reunión F-SGI-001 (docs/ACTA DE INDUCCION.pdf), con los firmantes del documento
+  induccion: {
+    codigo: "F-SGI-001",
+    version: "001",
+    fechaEmision: "2022-06-01",
+    elaborado: { nombre: "Oscar Vargas", cargo: "Coordinador de Auditoria y Calidad" },
+    revisado: { nombre: "Claudia Martínez", cargo: "Gerente" },
+    aprobado: { nombre: "Claudia Martínez", cargo: "Gerente" },
+  },
 };
 
 export function obtenerFormatoActa(db: Db | Tx, tipo: TipoActa): FormatoImpreso {
@@ -259,10 +269,10 @@ function crearActaEn(tx: Tx, datos: DatosActa & { fotos?: Foto[] }) {
 }
 
 /**
- * Acta de entrega: no cambia asignaciones. La baja y el egreso se crean con
- * crearActaDeBaja y crearActaDeEgreso, que también cambian los equipos.
+ * Actas de entrega e inducción: no cambian asignaciones. La baja y el egreso se
+ * crean con crearActaDeBaja y crearActaDeEgreso, que también cambian los equipos.
  */
-export function crearActa(db: Db, datos: DatosActa & { tipo: "entrega"; fotos?: Foto[] }) {
+export function crearActa(db: Db, datos: DatosActa & { tipo: "entrega" | "induccion"; fotos?: Foto[] }) {
   return db.transaction((tx) => crearActaEn(tx, datos));
 }
 

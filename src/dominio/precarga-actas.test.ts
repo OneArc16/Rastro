@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FORMATOS_PREDETERMINADOS } from "./actas";
 import {
+  precargarInduccion,
   precargarBaja,
   precargarEgreso,
   precargarEntrega,
@@ -181,5 +182,22 @@ describe("precargarBaja", () => {
     const datos = precargarBaja({ formato, equipo: monitor, responsable: null, hoy: "2026-11-16" });
     expect(datos.responsable.nombre).toBe("");
     expect(datos.equipo.procesador).toBe("");
+  });
+});
+
+describe("precargarInduccion", () => {
+  it("parte de la fecha de hoy, el formato vigente y todo lo demás en blanco", () => {
+    expect(precargarInduccion({ formato: FORMATOS_PREDETERMINADOS.induccion, hoy: "2026-11-19" })).toEqual({
+      formato: FORMATOS_PREDETERMINADOS.induccion,
+      fecha: "2026-11-19",
+      hora: "",
+      lugar: "",
+      objetivo: "",
+      proceso: "",
+      responsables: "",
+      asistentes: [],
+      puntos: "",
+      desarrollo: "",
+    });
   });
 });

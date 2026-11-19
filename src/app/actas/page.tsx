@@ -37,11 +37,16 @@ export default async function PaginaActas({ searchParams }: PageProps<"/actas">)
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Actas</h1>
           <p className="text-sm text-muted-foreground">
-            Historial de actas de entrega, egreso y baja. La entrega se crea desde la ficha del
-            funcionario y la baja desde la ficha del equipo.
+            Historial de actas de entrega, egreso, baja e inducción. La entrega se crea desde la
+            ficha del funcionario y la baja desde la ficha del equipo.
           </p>
         </div>
-        <BotonEnlace href="/actas/nueva?tipo=egreso">Nueva acta de egreso</BotonEnlace>
+        <div className="flex flex-wrap gap-2">
+          <BotonEnlace variant="outline" href="/actas/nueva?tipo=induccion">
+            Nueva acta de inducción
+          </BotonEnlace>
+          <BotonEnlace href="/actas/nueva?tipo=egreso">Nueva acta de egreso</BotonEnlace>
+        </div>
       </div>
 
       <FiltrosActas filtros={filtros} />

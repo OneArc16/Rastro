@@ -36,7 +36,7 @@ export function Hoja({
   pie,
   children,
 }: {
-  formato: "entrega" | "egreso" | "baja";
+  formato: "entrega" | "egreso" | "baja" | "induccion";
   pie: ReactNode;
   children: ReactNode;
 }) {

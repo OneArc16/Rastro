@@ -83,6 +83,7 @@ export async function crearActaAccion(formulario: FormData): Promise<ResultadoAc
   return intentar(() => {
     switch (acta.tipo) {
       case "entrega":
+      case "induccion":
         return crearActa(db, { ...acta, fotos });
       case "egreso":
         return crearActaDeEgreso(db, { ...acta, trasladar: envio.trasladar });

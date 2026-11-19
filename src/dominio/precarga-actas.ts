@@ -10,6 +10,7 @@ import {
   PERIFERICOS_ENTREGA,
   PRUEBAS_ENTREGA,
   type DatosBaja,
+  type DatosInduccion,
   type DatosEgreso,
   type DatosEntrega,
   type FormatoImpreso,
@@ -174,5 +175,21 @@ export function precargarBaja(entrada: {
     especificacion: "",
     diagnostico: { ...formato.elaborado },
     jefeArea: { nombre: "", cargo: "" },
+  };
+}
+
+/** Acta de inducción nueva: la fecha de hoy y el formato vigente; lo demás lo escribe el usuario. */
+export function precargarInduccion(entrada: { formato: FormatoImpreso; hoy: string }): DatosInduccion {
+  return {
+    formato: entrada.formato,
+    fecha: entrada.hoy,
+    hora: "",
+    lugar: "",
+    objetivo: "",
+    proceso: "",
+    responsables: "",
+    asistentes: [],
+    puntos: "",
+    desarrollo: "",
   };
 }

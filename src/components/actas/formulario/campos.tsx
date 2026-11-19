@@ -39,7 +39,7 @@ export function CampoTexto({
   ruta: string;
   etiqueta: string;
   register: Registro;
-  tipo?: "text" | "date" | "email";
+  tipo?: "text" | "date" | "email" | "time";
 }) {
   return (
     <div className="space-y-1.5">
@@ -53,15 +53,21 @@ export function CampoArea({
   ruta,
   etiqueta,
   register,
+  filas = 3,
+  ayuda,
 }: {
   ruta: string;
   etiqueta: string;
   register: Registro;
+  filas?: number;
+  /** Texto de ayuda debajo del campo. */
+  ayuda?: string;
 }) {
   return (
     <div className="space-y-1.5">
       <Label htmlFor={idDe(ruta)}>{etiqueta}</Label>
-      <Textarea id={idDe(ruta)} rows={3} {...register(ruta)} />
+      <Textarea id={idDe(ruta)} rows={filas} {...register(ruta)} />
+      {ayuda && <p className="text-xs text-muted-foreground">{ayuda}</p>}
     </div>
   );
 }

@@ -156,15 +156,35 @@ export const esquemaDatosBaja = z.object({
   jefeArea: persona,
 });
 
+// ---------------------------------------------------------------------------
+// Inducción: acta de reunión F-SGI-001
+// ---------------------------------------------------------------------------
+
+export const esquemaDatosInduccion = z.object({
+  formato: esquemaFormatoImpreso,
+  fecha: texto,
+  hora: texto,
+  lugar: texto,
+  objetivo: textoLargo,
+  proceso: texto,
+  responsables: texto,
+  asistentes: z.array(persona).max(60),
+  /** Un punto por línea; se imprimen numerados. */
+  puntos: textoLargo,
+  desarrollo: textoLargo,
+});
+
 export type DatosEntrega = z.output<typeof esquemaDatosEntrega>;
 export type DatosEgreso = z.output<typeof esquemaDatosEgreso>;
 export type DatosBaja = z.output<typeof esquemaDatosBaja>;
+export type DatosInduccion = z.output<typeof esquemaDatosInduccion>;
 export type FormatoImpreso = z.output<typeof esquemaFormatoImpreso>;
 
 export const ESQUEMA_DATOS_POR_TIPO = {
   entrega: esquemaDatosEntrega,
   egreso: esquemaDatosEgreso,
   baja: esquemaDatosBaja,
+  induccion: esquemaDatosInduccion,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -207,6 +227,7 @@ export const esquemaActa = z.discriminatedUnion("tipo", [
   z.object({ tipo: z.literal("entrega"), ...camposActa, datos: esquemaDatosEntrega }),
   z.object({ tipo: z.literal("egreso"), ...camposActa, datos: esquemaDatosEgreso }),
   z.object({ tipo: z.literal("baja"), ...camposActa, datos: esquemaDatosBaja }),
+  z.object({ tipo: z.literal("induccion"), ...camposActa, datos: esquemaDatosInduccion }),
 ]);
 
 export type EntradaActa = z.output<typeof esquemaActa>;

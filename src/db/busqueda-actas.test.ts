@@ -68,6 +68,11 @@ beforeEach(() => {
 });
 
 describe("interpretarCodigoActa", () => {
+  it("reconoce el código de las actas de inducción", () => {
+    expect(interpretarCodigoActa("ind-3")).toEqual({ tipo: "induccion", numero: 3 });
+    expect(interpretarCodigoActa("IND 0012")).toEqual({ tipo: "induccion", numero: 12 });
+  });
+
   it("reconoce el código con o sin guion y ceros", () => {
     expect(interpretarCodigoActa("ENT-0003")).toEqual({ tipo: "entrega", numero: 3 });
     expect(interpretarCodigoActa(" baj 12 ")).toEqual({ tipo: "baja", numero: 12 });

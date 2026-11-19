@@ -18,6 +18,7 @@ import {
   esquemaDatosBaja,
   esquemaDatosEgreso,
   esquemaDatosEntrega,
+  esquemaDatosInduccion,
 } from "@/lib/validacion/actas";
 import {
   aplicarFormatoVigente,
@@ -417,6 +418,53 @@ describe("formatos de acta", () => {
     expect(obtenerFormatoActa(db, "egreso")).toEqual(egreso);
     expect(obtenerFormatoActa(db, "baja")).toEqual(FORMATOS_PREDETERMINADOS.baja);
     expect(db.select().from(formatosActa).all()).toHaveLength(1);
+  });
+});
+
+describe("acta de inducción", () => {
+  const induccion = (desarrollo = "Se explica el módulo de admisiones.") =>
+    esquemaDatosInduccion.parse({
+      formato: FORMATOS_PREDETERMINADOS.induccion,
+      fecha: "2026-05-26",
+      lugar: "SISTEMAS",
+      objetivo: "INDUCCION EN EL USO DEL SOFTWARE MEDICO DNAPLUS WEB",
+      proceso: "AUDITORIA",
+      responsables: "Daniel Castaño",
+      asistentes: [
+        { nombre: "Daniel Andres Castaño Navarro", cargo: "Auxiliar de Sistemas" },
+        { nombre: "Maria Claudia Machado Romo", cargo: "Enfermera Jefe" },
+      ],
+      puntos: "Actualización y creación de pacientes\nAsignarles citas a pacientes",
+      desarrollo,
+    });
+
+  it("trae por defecto el formato F-SGI-001 del documento aprobado", () => {
+    expect(FORMATOS_PREDETERMINADOS.induccion).toEqual({
+      codigo: "F-SGI-001",
+      version: "001",
+      fechaEmision: "2022-06-01",
+      elaborado: { nombre: "Oscar Vargas", cargo: "Coordinador de Auditoria y Calidad" },
+      revisado: { nombre: "Claudia Martínez", cargo: "Gerente" },
+      aprobado: { nombre: "Claudia Martínez", cargo: "Gerente" },
+    });
+  });
+
+  it("se guarda con su propia numeración IND y su contenido completo", () => {
+    const primera = crearActa(db, { tipo: "induccion", fecha: "2026-05-26", activoIds: [], datos: induccion() });
+    const segunda = crearActa(db, { tipo: "induccion", fecha: "2026-05-27", activoIds: [], datos: induccion("Otra") });
+
+    expect(primera.codigo).toBe("IND-0001");
+    expect(segunda.codigo).toBe("IND-0002");
+    expect(codigoActa("induccion", 12)).toBe("IND-0012");
+    const guardada = db.select().from(actas).where(eq(actas.id, primera.id)).get();
+    expect(guardada?.tipo).toBe("induccion");
+    expect(guardada?.datos).toEqual(induccion());
+  });
+
+  it("rechaza contenido que no corresponde al acta de inducción", () => {
+    expect(() =>
+      crearActa(db, { tipo: "induccion", fecha: "2026-05-26", activoIds: [], datos: { asistentes: "x" } }),
+    ).toThrow(new ErrorDeNegocio("El contenido del acta no es válido"));
   });
 });
 

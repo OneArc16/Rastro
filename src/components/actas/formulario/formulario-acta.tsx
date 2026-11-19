@@ -21,10 +21,12 @@ import {
   type DatosBaja,
   type DatosEgreso,
   type DatosEntrega,
+  type DatosInduccion,
   type FormatoImpreso,
 } from "@/lib/validacion/actas";
 import { AdjuntoFotos, type FotoAdjunta } from "./adjunto-fotos";
 import { Seccion } from "./campos";
+import { SeccionesInduccion, type FuncionarioAsistente } from "./seccion-induccion";
 import { SeccionesBaja, SeccionesEgreso, SeccionesEntrega } from "./secciones";
 
 export type EquipoElegible = {
@@ -48,6 +50,8 @@ type Props = {
   /** Equipos que se pueden mostrar o elegir (en egreso se pueden agregar y quitar). */
   equipos: EquipoElegible[];
   ubicaciones?: { id: number; nombre: string }[];
+  /** Funcionarios que se pueden agregar como asistentes (acta de inducción). */
+  funcionarios?: FuncionarioAsistente[];
   /** Fotos ya guardadas del acta (al editar una baja). */
   fotosGuardadas?: { id: number; url: string }[];
 };
@@ -61,6 +65,8 @@ function fechaDelActa(tipo: TipoActa, datos: Record<string, unknown>): string {
       return (datos as DatosEgreso).fechaSalida;
     case "baja":
       return (datos as DatosBaja).equipo.fechaBaja;
+    case "induccion":
+      return (datos as DatosInduccion).fecha;
   }
 }
 
@@ -68,6 +74,7 @@ const NOMBRE_FECHA: Record<TipoActa, string> = {
   entrega: "La fecha de entrega",
   egreso: "La fecha de salida",
   baja: "La fecha de baja del equipo",
+  induccion: "La fecha de la reunión",
 };
 
 export function FormularioActa({
@@ -78,11 +85,12 @@ export function FormularioActa({
   equipos,
   ubicaciones = [],
   fotosGuardadas = [],
+  funcionarios = [],
 }: Props) {
   const router = useRouter();
   const [enviando, iniciarEnvio] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const { register, handleSubmit, watch, setValue, getValues } = useForm<FieldValues>({
+  const { register, handleSubmit, watch, setValue, getValues, control } = useForm<FieldValues>({
     defaultValues: { datos: inicial.datos },
   });
 
@@ -204,84 +212,89 @@ export function FormularioActa({
 
   return (
     <form onSubmit={alEnviar} className="max-w-4xl space-y-4">
-      <Seccion titulo="Equipos del acta">
-        {elegidos.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sin equipos.</p>
-        ) : (
-          <ul className="flex flex-wrap gap-2">
-            {elegidos.map((e) => (
-              <li key={e.id}>
-                <Badge variant="secondary" className="gap-1">
-                  {e.codigo}
-                  {e.marca ? ` · ${e.marca}` : ""}
-                  {tipo === "egreso" && (
-                    <button
-                      type="button"
-                      aria-label={`Quitar ${e.codigo}`}
-                      onClick={() => setActivoIds(activoIds.filter((id) => id !== e.id))}
-                    >
-                      <X className="size-3" />
-                    </button>
-                  )}
-                </Badge>
-              </li>
-            ))}
-          </ul>
-        )}
+      {tipo !== "induccion" && (
+        <Seccion titulo="Equipos del acta">
+          {elegidos.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sin equipos.</p>
+          ) : (
+            <ul className="flex flex-wrap gap-2">
+              {elegidos.map((e) => (
+                <li key={e.id}>
+                  <Badge variant="secondary" className="gap-1">
+                    {e.codigo}
+                    {e.marca ? ` · ${e.marca}` : ""}
+                    {tipo === "egreso" && (
+                      <button
+                        type="button"
+                        aria-label={`Quitar ${e.codigo}`}
+                        onClick={() => setActivoIds(activoIds.filter((id) => id !== e.id))}
+                      >
+                        <X className="size-3" />
+                      </button>
+                    )}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          )}
 
-        {tipo === "egreso" && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="agregar-equipo">Agregar equipo</Label>
-              <Selector
-                id="agregar-equipo"
-                opciones={disponibles.map((e) => ({
-                  valor: String(e.id),
-                  etiqueta: `${e.codigo}${e.marca ? ` · ${e.marca}` : ""}`,
-                }))}
-                valor=""
-                placeholder="Elegir equipo"
-                alCambiar={(valor) => valor && setActivoIds([...activoIds, Number(valor)])}
-              />
+          {tipo === "egreso" && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="agregar-equipo">Agregar equipo</Label>
+                <Selector
+                  id="agregar-equipo"
+                  opciones={disponibles.map((e) => ({
+                    valor: String(e.id),
+                    etiqueta: `${e.codigo}${e.marca ? ` · ${e.marca}` : ""}`,
+                  }))}
+                  valor=""
+                  placeholder="Elegir equipo"
+                  alCambiar={(valor) => valor && setActivoIds([...activoIds, Number(valor)])}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ubicacion-destino">Ubicación de destino</Label>
+                <Selector
+                  id="ubicacion-destino"
+                  opciones={[
+                    { valor: "", etiqueta: "Sin ubicación" },
+                    ...ubicaciones.map((u) => ({ valor: String(u.id), etiqueta: u.nombre })),
+                  ]}
+                  valor={ubicacionId}
+                  alCambiar={setUbicacionId}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+                <Button type="button" variant="outline" size="sm" onClick={rellenarDispositivos}>
+                  Rellenar dispositivos con estos equipos
+                </Button>
+                {modo === "crear" && (
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="size-4 accent-primary"
+                      checked={trasladar}
+                      onChange={(e) => setTrasladar(e.target.checked)}
+                    />
+                    Trasladar los equipos a la ubicación de destino
+                  </label>
+                )}
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ubicacion-destino">Ubicación de destino</Label>
-              <Selector
-                id="ubicacion-destino"
-                opciones={[
-                  { valor: "", etiqueta: "Sin ubicación" },
-                  ...ubicaciones.map((u) => ({ valor: String(u.id), etiqueta: u.nombre })),
-                ]}
-                valor={ubicacionId}
-                alCambiar={setUbicacionId}
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
-              <Button type="button" variant="outline" size="sm" onClick={rellenarDispositivos}>
-                Rellenar dispositivos con estos equipos
-              </Button>
-              {modo === "crear" && (
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    className="size-4 accent-primary"
-                    checked={trasladar}
-                    onChange={(e) => setTrasladar(e.target.checked)}
-                  />
-                  Trasladar los equipos a la ubicación de destino
-                </label>
-              )}
-            </div>
-          </div>
-        )}
+          )}
 
-        {tipo === "baja" && modo === "crear" && (
-          <p className="text-sm text-muted-foreground">
-            Al guardar, el equipo queda dado de baja y se cierra su asignación.
-          </p>
-        )}
-      </Seccion>
+          {tipo === "baja" && modo === "crear" && (
+            <p className="text-sm text-muted-foreground">
+              Al guardar, el equipo queda dado de baja y se cierra su asignación.
+            </p>
+          )}
+        </Seccion>
+      )}
 
+      {tipo === "induccion" && (
+        <SeccionesInduccion register={register} control={control} funcionarios={funcionarios} />
+      )}
       {tipo === "entrega" && (
         <SeccionesEntrega register={register} datos={datos as DatosEntrega} />
       )}
