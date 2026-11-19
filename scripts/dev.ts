@@ -3,6 +3,8 @@
  * En WSL también se descartan los puertos ocupados del lado de Windows
  * (por ejemplo, el contenedor de Docker en el 3000).
  *
+ * También aplica las migraciones pendientes al arrancar, como el contenedor.
+ *
  * Uso: pnpm dev            busca desde 3000
  *      PORT=4000 pnpm dev  usa exactamente ese puerto
  */
@@ -27,6 +29,9 @@ async function main() {
   const next = spawn("next", ["dev", "-H", "0.0.0.0", "-p", String(puerto)], {
     stdio: "inherit",
     shell: process.platform === "win32",
+    // Igual que en Docker: aplica las migraciones pendientes al arrancar
+    // (con respaldo previo), para que la base local no quede atrasada.
+    env: { ...process.env, RASTRO_MIGRAR_AL_INICIAR: process.env.RASTRO_MIGRAR_AL_INICIAR ?? "1" },
   });
   for (const senal of ["SIGINT", "SIGTERM"] as const) {
     process.on(senal, () => next.kill(senal));

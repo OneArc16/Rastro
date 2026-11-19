@@ -1,6 +1,6 @@
 /**
  * Se ejecuta una vez al iniciar el servidor de Next.js.
- * En la imagen de Docker (RASTRO_MIGRAR_AL_INICIAR=1) pone al día el esquema
+ * En Docker y en `pnpm dev` (RASTRO_MIGRAR_AL_INICIAR=1) pone al día el esquema
  * de la base antes de la primera petición, para que un volumen nuevo o una
  * versión nueva de la imagen funcionen sin correr drizzle-kit a mano.
  */

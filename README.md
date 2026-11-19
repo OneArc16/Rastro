@@ -21,6 +21,8 @@ Para actualizar después de cambiar el código: `docker compose up -d --build`.
 Para desarrollar en local con el contenedor corriendo, `pnpm dev` busca el
 primer puerto libre desde 3000 (en WSL también descarta los que usa Windows,
 como el de Docker) y avisa cuál tomó. Con `PORT=4000 pnpm dev` se fija uno.
+Al arrancar también aplica las migraciones pendientes a `data/rastro.db`, con
+un respaldo previo en `data/respaldos/`, igual que el contenedor.
 
 Cargar una base existente en un volumen vacío (una sola vez, con `pnpm dev` y
 el contenedor detenidos, para que no queden cambios a medias en `rastro.db-wal`):
