@@ -16,7 +16,7 @@ import {
   type TipoDestino,
 } from "@/components/acciones/campos";
 import { DialogoMantenimiento } from "@/components/mantenimientos/dialogo-mantenimiento";
-import { Selector } from "@/components/selector";
+import { SelectorBuscable } from "@/components/selector-buscable";
 import { Label } from "@/components/ui/label";
 import type { Destinos } from "@/db/consultas";
 import { ETIQUETAS_TIPO } from "@/lib/etiquetas";
@@ -239,12 +239,12 @@ function DialogoIntercambio({
     >
       <div className="space-y-2">
         <Label htmlFor="otro-activo">Intercambiar con</Label>
-        <Selector
+        <SelectorBuscable
           id="otro-activo"
           opciones={opciones}
           valor={otroId}
           alCambiar={setOtroId}
-          placeholder="Seleccione el otro activo..."
+          placeholder="Escriba código, tipo o responsable..."
         />
       </div>
       <CampoFecha valor={fecha} alCambiar={setFecha} />
