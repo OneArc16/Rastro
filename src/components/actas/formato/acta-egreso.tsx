@@ -146,14 +146,10 @@ export function ActaEgresoFormato({ datos }: { datos: DatosEgreso }) {
               <td className="ac-negrita">FIRMA DE FUNCIONARIO T.I:</td>
               <td className="ac-negrita">FIRMA FUNCIONARIO DISPENSARIO QUE RECIBE:</td>
             </tr>
+            {/* Recuadros en blanco: aquí se firma a mano */}
             <tr style={{ height: "74pt" }}>
-              <td style={{ verticalAlign: "bottom" }}>
-                <span className="ac-firmante">{ti.nombre}</span>
-              </td>
-              <td style={{ verticalAlign: "bottom" }}>
-                <span className="ac-firmante">{datos.recibe.nombre}</span>
-                <span className="ac-firmante">{datos.recibe.cargo}</span>
-              </td>
+              <td />
+              <td />
             </tr>
             <tr style={{ height: "29pt" }}>
               <td colSpan={2} className="ac-negrita">

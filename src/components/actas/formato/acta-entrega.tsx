@@ -264,15 +264,10 @@ function Pagina2({ datos }: { datos: DatosEntrega }) {
             <td className="ac-negrita">FIRMA DE QUIEN ENTREGA:</td>
             <td className="ac-negrita">FIRMA DE QUIEN RECIBE:</td>
           </tr>
+          {/* Recuadros en blanco: aquí se firma a mano */}
           <tr style={{ height: "47pt" }}>
-            <td style={{ verticalAlign: "bottom" }}>
-              <span className="ac-firmante">{datos.entrega.nombre}</span>
-              <span className="ac-firmante">{datos.entrega.cargo}</span>
-            </td>
-            <td style={{ verticalAlign: "bottom" }}>
-              <span className="ac-firmante">{datos.responsable.nombre}</span>
-              <span className="ac-firmante">{datos.responsable.cargo}</span>
-            </td>
+            <td />
+            <td />
           </tr>
           <tr style={{ height: "35pt" }}>
             <td className="ac-negrita">
