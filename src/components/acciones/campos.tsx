@@ -2,6 +2,7 @@
 
 import type { Destinos } from "@/db/consultas";
 import { Selector } from "@/components/selector";
+import { SelectorBuscable } from "@/components/selector-buscable";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -100,12 +101,14 @@ export function SelectorDestino({
         <Label htmlFor="destino">
           {tipo === "funcionario" ? "Funcionario" : "Ubicación"}
         </Label>
-        <Selector
+        <SelectorBuscable
+          // Al cambiar entre funcionario y ubicación se reinicia la búsqueda
+          key={tipo}
           id="destino"
           opciones={opciones}
           valor={destinoId}
           alCambiar={alCambiarDestino}
-          placeholder="Seleccione..."
+          placeholder={tipo === "funcionario" ? "Escriba el nombre..." : "Escriba la ubicación..."}
         />
       </div>
     </div>
