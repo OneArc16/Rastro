@@ -280,6 +280,52 @@ export function intercambiar(
   });
 }
 
+/**
+ * Dos funcionarios cambian de puesto: cada uno queda con todos los equipos
+ * del otro y con su ubicación, en una sola operación.
+ */
+export function cruzarPuestos(
+  db: Db,
+  datos: { funcionarioAId: number; funcionarioBId: number; fecha: string; motivo?: string },
+) {
+  validarFecha(datos.fecha);
+  if (datos.funcionarioAId === datos.funcionarioBId) {
+    throw new ErrorDeNegocio("Seleccione dos funcionarios distintos");
+  }
+
+  db.transaction((tx) => {
+    const a = obtenerFuncionarioActivo(tx, datos.funcionarioAId);
+    const b = obtenerFuncionarioActivo(tx, datos.funcionarioBId);
+    const vigentesA = vigentesDeFuncionario(tx, a.id);
+    const vigentesB = vigentesDeFuncionario(tx, b.id);
+
+    for (const vigente of vigentesA) {
+      cerrar(tx, vigente, datos.fecha);
+      abrir(tx, vigente.activoId, { funcionarioId: b.id }, datos.fecha, datos.motivo);
+    }
+    for (const vigente of vigentesB) {
+      cerrar(tx, vigente, datos.fecha);
+      abrir(tx, vigente.activoId, { funcionarioId: a.id }, datos.fecha, datos.motivo);
+    }
+
+    tx.update(funcionarios).set({ ubicacionId: b.ubicacionId }).where(eq(funcionarios.id, a.id)).run();
+    tx.update(funcionarios).set({ ubicacionId: a.ubicacionId }).where(eq(funcionarios.id, b.id)).run();
+  });
+}
+
+function obtenerFuncionarioActivo(tx: Tx, funcionarioId: number) {
+  validarDestino(tx, { funcionarioId });
+  return tx.select().from(funcionarios).where(eq(funcionarios.id, funcionarioId)).get()!;
+}
+
+function vigentesDeFuncionario(tx: Tx, funcionarioId: number) {
+  return tx
+    .select()
+    .from(asignaciones)
+    .where(and(eq(asignaciones.funcionarioId, funcionarioId), isNull(asignaciones.fechaHasta)))
+    .all();
+}
+
 type DatosBaja = { activoId: number; fecha: string; motivo?: string };
 
 export function darDeBaja(db: Db, datos: DatosBaja) {

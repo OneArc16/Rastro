@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { obtenerFichaFuncionario } from "@/db/consultas";
+import { listarFuncionarios, obtenerFichaFuncionario } from "@/db/consultas";
 import { buscarActas } from "@/db/consultas-actas";
 import { TablaActas } from "@/components/actas/tabla-actas";
+import { DialogoCrucePuestos } from "@/components/funcionarios/dialogo-cruce-puestos";
 import { DialogoRetiro } from "@/components/funcionarios/dialogo-retiro";
 import { Badge } from "@/components/ui/badge";
 import { BotonEnlace } from "@/components/boton-enlace";
@@ -54,6 +55,10 @@ export default async function PaginaFichaFuncionario({
             <BotonEnlace variant="outline" href={`/funcionarios/${funcionario.id}/editar`}>
               Editar
             </BotonEnlace>
+            <DialogoCrucePuestos
+              funcionario={{ id: funcionario.id, nombre: funcionario.nombre }}
+              companeros={listarFuncionarios()}
+            />
             <DialogoRetiro
               funcionario={{ id: funcionario.id, nombre: funcionario.nombre }}
               equiposVigentes={vigentes.length}

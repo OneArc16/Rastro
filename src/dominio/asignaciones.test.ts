@@ -11,6 +11,7 @@ import {
 } from "@/db/schema";
 import {
   asignar,
+  cruzarPuestos,
   darDeBaja,
   devolver,
   intercambiar,
@@ -311,6 +312,74 @@ describe("intercambiar (cambio de PC entre dos funcionarios)", () => {
     expect(() =>
       intercambiar(db, { activoAId: pc1, activoBId: monitor, fecha: "2025-05-01" }),
     ).toThrow(ErrorDeNegocio);
+  });
+});
+
+describe("cruzarPuestos (dos funcionarios cambian de puesto)", () => {
+  let puesto1: number;
+  let puesto2: number;
+
+  function ubicacionDe(funcionarioId: number) {
+    return db.select().from(funcionarios).where(eq(funcionarios.id, funcionarioId)).get()?.ubicacionId;
+  }
+
+  beforeEach(() => {
+    puesto1 = db.insert(ubicaciones).values({ nombre: "PUESTO 1" }).returning().get().id;
+    puesto2 = db.insert(ubicaciones).values({ nombre: "PUESTO 2" }).returning().get().id;
+    db.update(funcionarios).set({ ubicacionId: puesto1 }).where(eq(funcionarios.id, ana)).run();
+    db.update(funcionarios).set({ ubicacionId: puesto2 }).where(eq(funcionarios.id, beto)).run();
+    asignar(db, { activoId: pc1, destino: { funcionarioId: ana }, fecha: "2025-01-10" });
+    asignar(db, { activoId: monitor, destino: { funcionarioId: ana }, fecha: "2025-01-10" });
+    asignar(db, { activoId: pc2, destino: { funcionarioId: beto }, fecha: "2025-01-10" });
+  });
+
+  it("cruza todos los equipos y las ubicaciones de los dos en una operación", () => {
+    cruzarPuestos(db, {
+      funcionarioAId: ana,
+      funcionarioBId: beto,
+      fecha: "2025-05-01",
+      motivo: "Cambio de puesto",
+    });
+
+    expect(vigenteDe(pc1)).toMatchObject({ funcionarioId: beto, fechaDesde: "2025-05-01", motivo: "Cambio de puesto" });
+    expect(vigenteDe(monitor)).toMatchObject({ funcionarioId: beto, fechaDesde: "2025-05-01" });
+    expect(vigenteDe(pc2)).toMatchObject({ funcionarioId: ana, fechaDesde: "2025-05-01" });
+    expect(historialDe(pc1)[0]).toMatchObject({ funcionarioId: ana, fechaHasta: "2025-05-01" });
+    expect(historialDe(pc2)[0]).toMatchObject({ funcionarioId: beto, fechaHasta: "2025-05-01" });
+    expect(ubicacionDe(ana)).toBe(puesto2);
+    expect(ubicacionDe(beto)).toBe(puesto1);
+  });
+
+  it("funciona aunque uno de los dos no tenga equipos", () => {
+    devolver(db, { activoId: pc2, fecha: "2025-02-01" });
+    cruzarPuestos(db, { funcionarioAId: ana, funcionarioBId: beto, fecha: "2025-05-01" });
+
+    expect(vigenteDe(pc1)?.funcionarioId).toBe(beto);
+    expect(vigenteDe(monitor)?.funcionarioId).toBe(beto);
+    expect(ubicacionDe(ana)).toBe(puesto2);
+    expect(ubicacionDe(beto)).toBe(puesto1);
+  });
+
+  it("rechaza cruzar a un funcionario consigo mismo o con uno retirado, sin cambios", () => {
+    expect(() =>
+      cruzarPuestos(db, { funcionarioAId: ana, funcionarioBId: ana, fecha: "2025-05-01" }),
+    ).toThrow("Seleccione dos funcionarios distintos");
+
+    db.update(funcionarios).set({ retirado: true }).where(eq(funcionarios.id, beto)).run();
+    expect(() =>
+      cruzarPuestos(db, { funcionarioAId: ana, funcionarioBId: beto, fecha: "2025-05-01" }),
+    ).toThrow("BETO está retirado");
+    expect(historialDe(pc1)).toHaveLength(1);
+    expect(ubicacionDe(ana)).toBe(puesto1);
+  });
+
+  it("no deja cambios a medias si la fecha es anterior a una asignación", () => {
+    expect(() =>
+      cruzarPuestos(db, { funcionarioAId: ana, funcionarioBId: beto, fecha: "2025-01-01" }),
+    ).toThrow(ErrorDeNegocio);
+    expect(vigenteDe(pc1)?.funcionarioId).toBe(ana);
+    expect(vigenteDe(pc2)?.funcionarioId).toBe(beto);
+    expect(ubicacionDe(ana)).toBe(puesto1);
   });
 });
 

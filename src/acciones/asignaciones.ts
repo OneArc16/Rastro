@@ -3,6 +3,7 @@
 import { db } from "@/db";
 import {
   asignar,
+  cruzarPuestos,
   darDeBaja,
   devolver,
   intercambiar,
@@ -12,6 +13,7 @@ import {
 import {
   aDestino,
   esquemaBaja,
+  esquemaCrucePuestos,
   esquemaDevolucion,
   esquemaIntercambio,
   esquemaMovimiento,
@@ -49,6 +51,10 @@ export async function devolverActivo(datos: unknown): Promise<ResultadoAccion> {
 
 export async function intercambiarActivos(datos: unknown): Promise<ResultadoAccion> {
   return ejecutar(esquemaIntercambio, datos, (d) => intercambiar(db, d));
+}
+
+export async function cruzarPuestosAccion(datos: unknown): Promise<ResultadoAccion> {
+  return ejecutar(esquemaCrucePuestos, datos, (d) => cruzarPuestos(db, d));
 }
 
 export async function darDeBajaActivo(datos: unknown): Promise<ResultadoAccion> {
