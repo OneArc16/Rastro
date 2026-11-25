@@ -8,7 +8,7 @@ import { crearFuncionario, actualizarFuncionario } from "@/acciones/funcionarios
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Selector } from "@/components/selector";
+import { SelectorBuscable } from "@/components/selector-buscable";
 
 const SIN_UBICACION = "";
 
@@ -111,7 +111,7 @@ export function FormularioFuncionario({ ubicaciones, funcionario }: Props) {
 
       <div className="space-y-2">
         <Label htmlFor="ubicacionId">Ubicación</Label>
-        <Selector
+        <SelectorBuscable
           id="ubicacionId"
           opciones={[
             { valor: SIN_UBICACION, etiqueta: "Sin ubicación" },
@@ -119,6 +119,7 @@ export function FormularioFuncionario({ ubicaciones, funcionario }: Props) {
           ]}
           valor={ubicacionSeleccionada}
           alCambiar={(valor) => setValue("ubicacionId", valor)}
+          placeholder="Escriba la ubicación..."
         />
       </div>
 
