@@ -7,13 +7,12 @@ import {
   createColumnHelper,
   createFilteredRowModel,
   filterFn_equalsString,
-  filterFn_includesString,
   flexRender,
-  globalFilteringFeature,
   tableFeatures,
   useTable,
 } from "@tanstack/react-table";
 import type { FilaInventario } from "@/db/consultas";
+import { filtrarInventario } from "./filtrar-inventario";
 import { ETIQUETAS_ESTADO, ETIQUETAS_TIPO, VARIANTE_ESTADO } from "@/lib/etiquetas";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -32,10 +31,8 @@ const TODOS = "todos";
 
 const features = tableFeatures({
   columnFilteringFeature,
-  globalFilteringFeature,
   filteredRowModel: createFilteredRowModel(),
   filterFns: {
-    includesString: filterFn_includesString,
     equalsString: filterFn_equalsString,
   },
 });
@@ -158,12 +155,13 @@ export function TablaInventario({ datos }: { datos: FilaInventario[] }) {
     return filtros;
   }, [filtroTipo, filtroEstado, filtroUbicacion, filtroResponsable, filtroDisponibilidad]);
 
+  const filtradosPorTexto = useMemo(() => filtrarInventario(datos, busqueda), [datos, busqueda]);
+
   const tabla = useTable({
     features,
     columns: columnas,
-    data: datos,
-    globalFilterFn: "includesString",
-    state: { columnFilters, globalFilter: busqueda },
+    data: filtradosPorTexto,
+    state: { columnFilters },
   });
 
   const filas = tabla.getRowModel().rows;
