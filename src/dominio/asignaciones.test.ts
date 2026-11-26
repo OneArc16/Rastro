@@ -11,6 +11,7 @@ import {
 } from "@/db/schema";
 import {
   asignar,
+  asignarVarios,
   cruzarPuestos,
   darDeBaja,
   devolver,
@@ -380,6 +381,62 @@ describe("cruzarPuestos (dos funcionarios cambian de puesto)", () => {
     expect(vigenteDe(pc1)?.funcionarioId).toBe(ana);
     expect(vigenteDe(pc2)?.funcionarioId).toBe(beto);
     expect(ubicacionDe(ana)).toBe(puesto1);
+  });
+});
+
+describe("asignarVarios (varios equipos a un funcionario)", () => {
+  it("asigna los disponibles y traslada los que están con otro, en una operación", () => {
+    asignar(db, { activoId: pc2, destino: { funcionarioId: beto }, fecha: "2025-01-10" });
+
+    asignarVarios(db, {
+      funcionarioId: ana,
+      activoIds: [pc1, pc2, monitor],
+      fecha: "2025-05-01",
+      motivo: "Puesto nuevo",
+    });
+
+    for (const activoId of [pc1, pc2, monitor]) {
+      expect(vigenteDe(activoId)).toMatchObject({ funcionarioId: ana, fechaDesde: "2025-05-01", motivo: "Puesto nuevo" });
+    }
+    expect(historialDe(pc2)[0]).toMatchObject({ funcionarioId: beto, fechaHasta: "2025-05-01" });
+  });
+
+  it("deja igual los equipos que ya tiene el funcionario", () => {
+    asignar(db, { activoId: pc1, destino: { funcionarioId: ana }, fecha: "2025-01-10" });
+    asignarVarios(db, { funcionarioId: ana, activoIds: [pc1, monitor], fecha: "2025-05-01" });
+
+    expect(historialDe(pc1)).toHaveLength(1);
+    expect(vigenteDe(pc1)?.fechaDesde).toBe("2025-01-10");
+    expect(vigenteDe(monitor)?.funcionarioId).toBe(ana);
+  });
+
+  it("lleva los equipos al funcionario aunque estén en otra ubicación, sin moverlo a él", () => {
+    const sede = db.insert(ubicaciones).values({ nombre: "SEDE" }).returning().get().id;
+    db.update(funcionarios).set({ ubicacionId: sede }).where(eq(funcionarios.id, ana)).run();
+    asignar(db, { activoId: pc1, destino: { ubicacionId: bodega }, fecha: "2025-01-10" });
+
+    asignarVarios(db, { funcionarioId: ana, activoIds: [pc1], fecha: "2025-05-01" });
+
+    expect(vigenteDe(pc1)?.funcionarioId).toBe(ana);
+    expect(db.select().from(funcionarios).where(eq(funcionarios.id, ana)).get()?.ubicacionId).toBe(sede);
+  });
+
+  it("rechaza una lista vacía, un funcionario retirado o un equipo dado de baja, sin cambios", () => {
+    expect(() => asignarVarios(db, { funcionarioId: ana, activoIds: [], fecha: "2025-05-01" })).toThrow(
+      "Seleccione al menos un equipo",
+    );
+
+    darDeBaja(db, { activoId: monitor, fecha: "2025-02-01" });
+    expect(() =>
+      asignarVarios(db, { funcionarioId: ana, activoIds: [pc1, monitor], fecha: "2025-05-01" }),
+    ).toThrow("El activo MON-0001 está dado de baja");
+    expect(vigenteDe(pc1)).toBeNull();
+
+    db.update(funcionarios).set({ retirado: true }).where(eq(funcionarios.id, beto)).run();
+    expect(() => asignarVarios(db, { funcionarioId: beto, activoIds: [pc1], fecha: "2025-05-01" })).toThrow(
+      "BETO está retirado",
+    );
+    expect(vigenteDe(pc1)).toBeNull();
   });
 });
 

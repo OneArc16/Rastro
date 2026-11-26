@@ -233,7 +233,7 @@ export function trasladarEn(tx: Tx, datos: DatosTrasladar) {
  * Deja el activo en el destino: lo asigna si está disponible, lo traslada si
  * está en otro lado y no hace nada si ya está ahí.
  */
-export function llevarADestinoEn(tx: Tx, datos: DatosAsignar) {
+export function llevarADestinoEn(tx: Tx, datos: DatosTrasladar) {
   validarFecha(datos.fecha);
   const activo = obtenerActivoUtilizable(tx, datos.activoId);
   const vigente = obtenerVigente(tx, activo.id);
@@ -248,6 +248,35 @@ export function devolver(db: Db, datos: { activoId: number; fecha: string }) {
     const activo = obtenerActivo(tx, datos.activoId);
     const vigente = exigirVigente(tx, activo.id, activo.codigo);
     cerrar(tx, vigente, datos.fecha);
+  });
+}
+
+/**
+ * Deja varios equipos a cargo de un funcionario en una sola operación:
+ * asigna los disponibles, trae los que están con otro y deja igual los que ya
+ * tiene. Los equipos van al funcionario: su ubicación no cambia.
+ */
+export function asignarVarios(
+  db: Db,
+  datos: { funcionarioId: number; activoIds: number[]; fecha: string; motivo?: string },
+) {
+  validarFecha(datos.fecha);
+  if (datos.activoIds.length === 0) {
+    throw new ErrorDeNegocio("Seleccione al menos un equipo");
+  }
+  const destino = { funcionarioId: datos.funcionarioId };
+
+  db.transaction((tx) => {
+    validarDestino(tx, destino);
+    for (const activoId of new Set(datos.activoIds)) {
+      llevarADestinoEn(tx, {
+        activoId,
+        destino,
+        fecha: datos.fecha,
+        motivo: datos.motivo,
+        seMueve: "equipo",
+      });
+    }
   });
 }
 

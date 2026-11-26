@@ -26,6 +26,13 @@ export const esquemaIntercambio = z.object({
   motivo: textoOpcional,
 });
 
+export const esquemaAsignacionVarios = z.object({
+  funcionarioId: idPositivo("Funcionario inválido"),
+  activoIds: z.array(idPositivo("Activo inválido")).min(1, "Seleccione al menos un equipo"),
+  fecha: fechaObligatoria,
+  motivo: textoOpcional,
+});
+
 export const esquemaCrucePuestos = z.object({
   funcionarioAId: idPositivo("Funcionario inválido"),
   funcionarioBId: idPositivo("Seleccione con quién cambia de puesto"),

@@ -205,6 +205,23 @@ export function listarInventarioParaExportar() {
   return activosConAsignacionVigente();
 }
 
+/** Equipos que se pueden asignar (todos menos los dados de baja), con quién los tiene hoy. */
+export function listarEquiposParaAsignar() {
+  return listarActivos()
+    .filter((a) => a.estado !== "dado_de_baja")
+    .map((a) => ({
+      id: a.id,
+      codigo: a.codigo,
+      tipo: a.tipo,
+      marca: a.marca,
+      modelo: a.modelo,
+      serial: a.serial,
+      tieneAhora: a.responsable ?? a.ubicacionAsignada,
+    }));
+}
+
+export type EquipoParaAsignar = ReturnType<typeof listarEquiposParaAsignar>[number];
+
 export type FilaInventario = ReturnType<typeof listarActivos>[number];
 
 /** Ficha completa de un activo: datos, historial de asignaciones y mantenimientos. */
